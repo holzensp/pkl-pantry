@@ -1,0 +1,43 @@
+amends "pkl:test"
+
+import "../DateTime.pkl"
+
+local _year = 1985
+local _month = 4
+local _day = 12
+local _hour = 23
+local _minute = 20
+local _second = 50
+local _secfrac = 52
+local _dateTime = "1985-04-12T23:20:50.52Z"
+
+local dateByComponents = new DateTime {
+  definedBy = "Components"
+  year = _year
+  month = _month
+  day = _day
+  hour = _hour
+  minute = _minute
+  second = _second
+  secfrac = _secfrac
+}
+
+local dateByString = new DateTime { dateTime = _dateTime }
+
+facts {
+  ["Defined by RFC3339 string"] {
+    dateByString.year == _year
+    dateByString.month == _month
+    dateByString.day == _day
+    dateByString.hour == _hour
+    dateByString.minute == _minute
+    dateByString.second == _second
+    dateByString.secfrac == _secfrac
+  }
+  ["Defined by components"] {
+    dateByComponents.dateTime == _dateTime
+  }
+  ["Weekday"] {
+    dateByComponents.weekday == "Friday"
+  }
+}

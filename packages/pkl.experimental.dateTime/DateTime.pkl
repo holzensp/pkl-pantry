@@ -1,0 +1,61 @@
+module pkl.experimental.DateTime
+
+import "pkl:reflect"
+
+hidden definedBy: *"String"|"Components"
+
+year: Int(isBetween(0, 9999)) = if (definedBy == "Components") 0 else dateTime.substring(0,4).toInt()
+month: Int(isBetween(1, 12)) = if (definedBy == "Components") 1 else dateTime.substring(5,7).toInt()
+day: Int(isBetween(1, _maxDay[month])) = if (definedBy == "Components") 1 else dateTime.substring(8,10).toInt()
+local _maxDay = List(-1, 31, if (isLeapYear) 29 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+hour: Int(isBetween(0, 23)) = if (definedBy == "Components") 0 else dateTime.substring(11,13).toInt()
+minute: Int(isBetween(0, 59)) = if (definedBy == "Components") 0 else dateTime.substring(14,16).toInt()
+// TODO: Leap second rules; 0-58, 0-59, 0-60
+second: Int(isBetween(0, 59)) = if (definedBy == "Components") 0 else dateTime.substring(17,19).toInt()
+secfrac: UInt =
+  if (definedBy == "Components") 0 else
+    let (string = dateTime.drop(20).takeWhile((it) -> it.matches(Regex(#"\d"#)))) //TODO: This should be a single regexp
+      if (string.isBlank) 0 else string.toInt()
+
+local _dateTimeOffset = dateTime.split("Z").drop(1).firstOrNull?.split(":") ?? List("+0", "0")
+offsetSign: Int(abs == 1) = if (definedBy == "Components" || !_dateTimeOffset.first.startsWith("-")) 1 else -1
+offsetHour: Int(isBetween(0, 23)) = if (definedBy == "Components") 0 else _dateTimeOffset[0].drop(1).toInt()
+offsetMinute: Int(isBetween(0, 59)) = if (definedBy == "Components") 0 else _dateTimeOffset[1].toInt()
+
+local dateFullyear = year.toString().padStart(4, "0")
+local dateMonth = month.toString().padStart(2, "0")
+local dateMday = day.toString().padStart(2, "0")
+local timeHour = hour.toString().padStart(2, "0")
+local timeMinute = minute.toString().padStart(2, "0")
+local timeSecond = second.toString().padStart(2, "0")
+local timeSecfrac = if (secfrac > 0) ".\(secfrac)" else ""
+local timeNumoffset = "\(if (offsetSign < 0) "-" else "+")\(offsetHour):\(offsetMinute)"
+local timeOffset = "Z\(if (offsetHour == 0 && offsetMinute == 0) "" else timeNumoffset)"
+local partialTime = "\(timeHour):\(timeMinute):\(timeSecond)\(timeSecfrac)"
+local fullDate = "\(dateFullyear)-\(dateMonth)-\(dateMday)"
+local fullTime = "\(partialTime)\(timeOffset)"
+dateTime = "\(fullDate)T\(fullTime)"
+
+rfc2822: String = "TODO"
+
+/// Whether [year] is a leap year.
+///
+/// Leap years are defined in [RFC-3339](https://datatracker.ietf.org/doc/html/rfc3339) as
+/// > In the Gregorian calendar, a year which has 366 days.
+/// > A leap year is a year whose number is divisible by
+/// > four an integral number of times, except that if it is
+/// > a centennial year (i.e. divisible by one hundred) it
+/// > shall also be divisible by four hundred an integral
+/// > number of times.
+fixed isLeapYear: Boolean = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)
+
+typealias Weekday = "Sunday"|"Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"
+fixed weekday: Weekday(year > 0 || month >= 3) =
+  let (days = (reflect.TypeAlias(Weekday).referent as reflect.UnionType).members as List<reflect.StringLiteralType>)
+    let (_month = (month + 10) % 12)
+      let (_year = year - if (month <= 2) 1 else 0)
+        let (_cent = _year ~/ 100)
+          let (__year = _year % 100)
+            let (_dayNum: Int = ((26 * _month - 2) ~/ 10 + day + __year + __year ~/ 4 + _cent ~/ 4 + 5 * _cent) % 7)
+              days[_dayNum].value as Weekday
