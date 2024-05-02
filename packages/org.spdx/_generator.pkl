@@ -1,0 +1,81 @@
+import "pkl:json"
+
+class License {
+  reference: Uri
+  isDeprecatedLicenseId: Boolean
+  detailsUrl: Uri
+  referenceNumber: UInt
+  name: String
+  licenseId: String
+  seeAlso: Listing<Uri>
+  isOsiApproved: Boolean
+}
+
+class Licenses {
+  licenseListVersion: String
+  licenses: Listing<License>
+  releaseDate: String
+}
+
+local function json(uri): json.Value = new json.Parser {}.parse(read(uri))
+
+hidden source = new json.Parser {}.parse(read("https://spdx.org/licenses/licenses.json"))
+
+licenses: Mapping<String, License> = new {
+  for (license in source.licenses) {
+    [license.licenseId] {
+      reference = license.reference
+      isDeprecatedLicenseId = license.isDeprecatedLicenseId
+      detailsUrl = license.detailsUrl
+      referenceNumber = license.referenceNumber
+      name = license.name
+      licenseId = license.licenseId
+      seeAlso = license.seeAlso
+      isOsiApproved = license.isOsiApproved
+    }
+  }
+}
+
+licenseDetails: Mapping<String, Dynamic> = new {
+  for (id, license in licenses) {
+    for (details in List(json(license.detailsUrl) as Dynamic)) {
+      [trace(id)] = details
+    }
+  }
+}
+
+output {
+  files {
+    ["generated.pkl"] {
+      text = """
+        typealias LicenseId =
+          "\(licenses.keys.join("\"\n  |\""))"
+
+        class License {
+          reference: Uri
+          isDeprecatedLicenseId: Boolean
+          detailsUrl: Uri
+          referenceNumber: UInt
+          name: String
+          licenseId: LicenseId
+          seeAlso: Listing<Uri>
+          isOsiApproved: Boolean
+        }
+
+        \(super.text)
+        """
+      value = licenses.toMap().toDynamic()
+      renderer = new PcfRenderer {
+        converters {
+          [License] = (it) -> new PcfRenderDirective {
+            before = ": License = new "
+            value = it
+          }
+        }
+      }
+    }
+    for (id, license in licenses) {
+      ["details/\(trace(id)).json"] { text = (read(license.detailsUrl) as Resource).text }
+    }
+  }
+}
