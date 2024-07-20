@@ -20,7 +20,6 @@ amends "pkl:test"
 import "@jsonschema/JsonSchema.pkl"
 import "@jsonschema/Parser.pkl"
 import "../internal/ModuleGenerator.pkl"
-import "../internal/ModulesGenerator.pkl"
 import "@uri/URI.pkl"
 
 examples {
@@ -370,7 +369,7 @@ examples {
     new ModuleGenerator { rootSchema = schema; moduleName = "com.apple.Example" }.moduleNode.render("")
   }
   ["coverage"] {
-    for (gen in read*("corpus/*").toMap().entries.flatMap((it) -> new ModulesGenerator {
+    for (gen in read*("corpus/*").toMap().entries.flatMap((it) -> new ModuleGenerator {
       rootSchema = Parser.parse(it.second) as JsonSchema
       baseUri = URI.parse(it.first)!!
     }.modules)) {
