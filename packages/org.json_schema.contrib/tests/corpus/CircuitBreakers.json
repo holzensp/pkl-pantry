@@ -1,0 +1,117 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/CircuitBreakers",
+    "$package": "envoy.config.cluster.v3",
+    "definitions": {
+        "CircuitBreakers": {
+            "properties": {
+                "thresholds": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.cluster.v3.CircuitBreakers.Thresholds"
+                    },
+                    "type": "array",
+                    "description": "If multiple :ref:`Thresholds\u003cenvoy_v3_api_msg_config.cluster.v3.CircuitBreakers.Thresholds\u003e` are defined with the same :ref:`RoutingPriority\u003cenvoy_v3_api_enum_config.core.v3.RoutingPriority\u003e`, the first one in the list is used. If no Thresholds is defined for a given :ref:`RoutingPriority\u003cenvoy_v3_api_enum_config.core.v3.RoutingPriority\u003e`, the default values are used."
+                },
+                "per_host_thresholds": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.cluster.v3.CircuitBreakers.Thresholds"
+                    },
+                    "type": "array",
+                    "description": "Optional per-host limits which apply to each individual host in a cluster. .. note::  currently only the :ref:`max_connections  \u003cenvoy_v3_api_field_config.cluster.v3.CircuitBreakers.Thresholds.max_connections\u003e` field is supported for per-host limits. If multiple per-host :ref:`Thresholds\u003cenvoy_v3_api_msg_config.cluster.v3.CircuitBreakers.Thresholds\u003e` are defined with the same :ref:`RoutingPriority\u003cenvoy_v3_api_enum_config.core.v3.RoutingPriority\u003e`, the first one in the list is used. If no per-host Thresholds are defined for a given :ref:`RoutingPriority\u003cenvoy_v3_api_enum_config.core.v3.RoutingPriority\u003e`, the cluster will not have per-host limits."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Circuit breakers]",
+            "description": "[#protodoc-title: Circuit breakers]  :ref:`Circuit breaking\u003carch_overview_circuit_break\u003e` settings can be specified individually for each defined priority."
+        },
+        "envoy.config.cluster.v3.CircuitBreakers.Thresholds": {
+            "properties": {
+                "priority": {
+                    "enum": [
+                        "DEFAULT",
+                        0,
+                        "HIGH",
+                        1
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "[#protodoc-title: Common types]",
+                    "description": "[#protodoc-title: Common types]  Envoy supports :ref:`upstream priority routing \u003carch_overview_http_routing_priority\u003e` both at the route and the virtual cluster level. The current priority implementation uses different connection pool and circuit breaking settings for each priority level. This means that even for HTTP/2 requests, two physical connections will be used to an upstream host. In the future Envoy will likely support true HTTP/2 priority over a single upstream connection."
+                },
+                "max_connections": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The maximum number of connections that Envoy will make to the upstream cluster. If not specified, the default is 1024."
+                },
+                "max_pending_requests": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The maximum number of pending requests that Envoy will allow to the upstream cluster. If not specified, the default is 1024. This limit is applied as a connection limit for non-HTTP traffic."
+                },
+                "max_requests": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The maximum number of parallel requests that Envoy will make to the upstream cluster. If not specified, the default is 1024. This limit does not apply to non-HTTP traffic."
+                },
+                "max_retries": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The maximum number of parallel retries that Envoy will allow to the upstream cluster. If not specified, the default is 3."
+                },
+                "retry_budget": {
+                    "$ref": "#/definitions/envoy.config.cluster.v3.CircuitBreakers.Thresholds.RetryBudget",
+                    "additionalProperties": true,
+                    "description": "Specifies a limit on concurrent retries in relation to the number of active requests. This parameter is optional. .. note::    If this field is set, the retry budget will override any configured retry circuit    breaker."
+                },
+                "track_remaining": {
+                    "type": "boolean",
+                    "description": "If track_remaining is true, then stats will be published that expose the number of resources remaining until the circuit breakers open. If not specified, the default is false. .. note::    If a retry budget is used in lieu of the max_retries circuit breaker,    the remaining retry resources remaining will not be tracked."
+                },
+                "max_connection_pools": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The maximum number of connection pools per cluster that Envoy will concurrently support at once. If not specified, the default is unlimited. Set this for clusters which create a large number of connection pools. See :ref:`Circuit Breaking \u003carch_overview_circuit_break_cluster_maximum_connection_pools\u003e` for more details."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds",
+            "description": "A Thresholds defines CircuitBreaker settings for a :ref:`RoutingPriority\u003cenvoy_v3_api_enum_config.core.v3.RoutingPriority\u003e`. [#next-free-field: 9]"
+        },
+        "envoy.config.cluster.v3.CircuitBreakers.Thresholds.RetryBudget": {
+            "properties": {
+                "budget_percent": {
+                    "$ref": "#/definitions/envoy.type.v3.Percent",
+                    "additionalProperties": true,
+                    "description": "Specifies the limit on concurrent retries as a percentage of the sum of active requests and active pending requests. For example, if there are 100 active requests and the budget_percent is set to 25, there may be 25 active retries. This parameter is optional. Defaults to 20%."
+                },
+                "min_retry_concurrency": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Specifies the minimum retry concurrency allowed for the retry budget. The limit on the number of active retries may never go below this number. This parameter is optional. Defaults to 3."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retry Budget"
+        },
+        "envoy.type.v3.Percent": {
+            "properties": {
+                "value": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Percent]",
+            "description": "[#protodoc-title: Percent]  Identifies a percentage, in the range [0.0, 100.0]."
+        }
+    }
+}

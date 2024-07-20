@@ -1,0 +1,134 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Watchdog",
+    "$package": "envoy.config.bootstrap.v3",
+    "definitions": {
+        "Watchdog": {
+            "properties": {
+                "actions": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.bootstrap.v3.Watchdog.WatchdogAction"
+                    },
+                    "type": "array",
+                    "description": "Register actions that will fire on given WatchDog events. See ``WatchDogAction`` for priority of events."
+                },
+                "miss_timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "The duration after which Envoy counts a nonresponsive thread in the ``watchdog_miss`` statistic. If not specified the default is 200ms.",
+                    "format": "regex"
+                },
+                "megamiss_timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "The duration after which Envoy counts a nonresponsive thread in the ``watchdog_mega_miss`` statistic. If not specified the default is 1000ms.",
+                    "format": "regex"
+                },
+                "kill_timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "If a watched thread has been nonresponsive for this duration, assume a programming error and kill the entire Envoy process. Set to 0 to disable kill behavior. If not specified the default is 0 (disabled).",
+                    "format": "regex"
+                },
+                "max_kill_timeout_jitter": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "Defines the maximum jitter used to adjust the ``kill_timeout`` if ``kill_timeout`` is enabled. Enabling this feature would help to reduce risk of synchronized watchdog kill events across proxies due to external triggers. Set to 0 to disable. If not specified the default is 0 (disabled).",
+                    "format": "regex"
+                },
+                "multikill_timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "If ``max(2, ceil(registered_threads * Fraction(*multikill_threshold*)))`` threads have been nonresponsive for at least this duration kill the entire Envoy process. Set to 0 to disable this behavior. If not specified the default is 0 (disabled).",
+                    "format": "regex"
+                },
+                "multikill_threshold": {
+                    "$ref": "#/definitions/envoy.type.v3.Percent",
+                    "additionalProperties": true,
+                    "description": "Sets the threshold for ``multikill_timeout`` in terms of the percentage of nonresponsive threads required for the ``multikill_timeout``. If not specified the default is 0."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Watchdog",
+            "description": "Envoy process watchdog configuration. When configured, this monitors for nonresponsive threads and kills the process after the configured thresholds. See the :ref:`watchdog documentation \u003coperations_performance_watchdog\u003e` for more information. [#next-free-field: 8]"
+        },
+        "envoy.config.bootstrap.v3.Watchdog.WatchdogAction": {
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/envoy.config.core.v3.TypedExtensionConfig",
+                    "additionalProperties": true,
+                    "description": "Extension specific configuration for the action."
+                },
+                "event": {
+                    "enum": [
+                        "UNKNOWN",
+                        0,
+                        "KILL",
+                        1,
+                        "MULTIKILL",
+                        2,
+                        "MEGAMISS",
+                        3,
+                        "MISS",
+                        4
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Watchdog Event",
+                    "description": "The events are fired in this order: KILL, MULTIKILL, MEGAMISS, MISS. Within an event type, actions execute in the order they are configured. For KILL/MULTIKILL there is a default PANIC that will run after the registered actions and kills the process if it wasn't already killed. It might be useful to specify several debug actions, and possibly an alternate FATAL action."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Watchdog Action"
+        },
+        "envoy.config.core.v3.TypedExtensionConfig": {
+            "properties": {
+                "name": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The name of an extension. This is not used to select the extension, instead it serves the role of an opaque identifier."
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "The typed config for the extension. The type URL will be used to identify the extension. In the case that the type URL is ``xds.type.v3.TypedStruct`` (or, for historical reasons, ``udpa.type.v1.TypedStruct``), the inner type URL of ``TypedStruct`` will be utilized. See the :ref:`extension configuration overview \u003cconfig_overview_extension_configuration\u003e` for further details."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Extension configuration]",
+            "description": "[#protodoc-title: Extension configuration]  Message type for extension configuration. [#next-major-version: revisit all existing typed_config that doesn't use this wrapper.]."
+        },
+        "envoy.type.v3.Percent": {
+            "properties": {
+                "value": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Percent]",
+            "description": "[#protodoc-title: Percent]  Identifies a percentage, in the range [0.0, 100.0]."
+        }
+    }
+}

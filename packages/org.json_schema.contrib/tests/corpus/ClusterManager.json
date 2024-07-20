@@ -1,0 +1,872 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/ClusterManager",
+    "$package": "envoy.config.bootstrap.v3",
+    "definitions": {
+        "ClusterManager": {
+            "properties": {
+                "local_cluster_name": {
+                    "type": "string",
+                    "description": "Name of the local cluster (i.e., the cluster that owns the Envoy running this configuration). In order to enable :ref:`zone aware routing \u003carch_overview_load_balancing_zone_aware_routing\u003e` this option must be set. If ``local_cluster_name`` is defined then :ref:`clusters \u003cenvoy_v3_api_msg_config.cluster.v3.Cluster\u003e` must be defined in the :ref:`Bootstrap static cluster resources \u003cenvoy_v3_api_field_config.bootstrap.v3.Bootstrap.StaticResources.clusters\u003e`. This is unrelated to the :option:`--service-cluster` option which does not `affect zone aware routing \u003chttps://github.com/envoyproxy/envoy/issues/774\u003e`_."
+                },
+                "outlier_detection": {
+                    "$ref": "#/definitions/envoy.config.bootstrap.v3.ClusterManager.OutlierDetection",
+                    "additionalProperties": true,
+                    "description": "Optional global configuration for outlier detection."
+                },
+                "upstream_bind_config": {
+                    "$ref": "#/definitions/envoy.config.core.v3.BindConfig",
+                    "additionalProperties": true,
+                    "description": "Optional configuration used to bind newly established upstream connections. This may be overridden on a per-cluster basis by upstream_bind_config in the cds_config."
+                },
+                "load_stats_config": {
+                    "$ref": "#/definitions/envoy.config.core.v3.ApiConfigSource",
+                    "additionalProperties": true,
+                    "description": "A management server endpoint to stream load stats to via ``StreamLoadStats``. This must have :ref:`api_type \u003cenvoy_v3_api_field_config.core.v3.ApiConfigSource.api_type\u003e` :ref:`GRPC \u003cenvoy_v3_api_enum_value_config.core.v3.ApiConfigSource.ApiType.GRPC\u003e`."
+                },
+                "enable_deferred_cluster_creation": {
+                    "type": "boolean",
+                    "description": "Whether the ClusterManager will create clusters on the worker threads inline during requests. This will save memory and CPU cycles in cases where there are lots of inactive clusters and \u003e 1 worker thread."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Cluster Manager",
+            "description": "Cluster manager :ref:`architecture overview \u003carch_overview_cluster_manager\u003e`. [#next-free-field: 6]"
+        },
+        "envoy.config.bootstrap.v3.ClusterManager.OutlierDetection": {
+            "properties": {
+                "event_log_path": {
+                    "type": "string",
+                    "description": "Specifies the path to the outlier event log."
+                },
+                "event_service": {
+                    "$ref": "#/definitions/envoy.config.core.v3.EventServiceConfig",
+                    "additionalProperties": true,
+                    "description": "[#not-implemented-hide:] The gRPC service for the outlier detection event service. If empty, outlier detection events won't be sent to a remote endpoint."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outlier Detection"
+        },
+        "envoy.config.core.v3.ApiConfigSource": {
+            "properties": {
+                "api_type": {
+                    "enum": [
+                        "DEPRECATED_AND_UNAVAILABLE_DO_NOT_USE",
+                        0,
+                        "REST",
+                        1,
+                        "GRPC",
+                        2,
+                        "DELTA_GRPC",
+                        3,
+                        "AGGREGATED_GRPC",
+                        5,
+                        "AGGREGATED_DELTA_GRPC",
+                        6
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Api Type",
+                    "description": "APIs may be fetched via either REST or gRPC."
+                },
+                "transport_api_version": {
+                    "enum": [
+                        "AUTO",
+                        0,
+                        "V2",
+                        1,
+                        "V3",
+                        2
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "[#protodoc-title: Configuration sources]",
+                    "description": "[#protodoc-title: Configuration sources]  xDS API and non-xDS services version. This is used to describe both resource and transport protocol versions (in distinct configuration fields)."
+                },
+                "cluster_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array",
+                    "description": "Cluster names should be used only with REST. If \u003e 1 cluster is defined, clusters will be cycled through if any kind of failure occurs. .. note::  The cluster with name ``cluster_name`` must be statically defined and its  type must not be ``EDS``."
+                },
+                "grpc_services": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.GrpcService"
+                    },
+                    "type": "array",
+                    "description": "Multiple gRPC services be provided for GRPC. If \u003e 1 cluster is defined, services will be cycled through if any kind of failure occurs."
+                },
+                "refresh_delay": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "For REST APIs, the delay between successive polls.",
+                    "format": "regex"
+                },
+                "request_timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "For REST APIs, the request timeout. If not set, a default value of 1s will be used.",
+                    "format": "regex"
+                },
+                "rate_limit_settings": {
+                    "$ref": "#/definitions/envoy.config.core.v3.RateLimitSettings",
+                    "additionalProperties": true,
+                    "description": "For GRPC APIs, the rate limit settings. If present, discovery requests made by Envoy will be rate limited."
+                },
+                "set_node_on_first_message_only": {
+                    "type": "boolean",
+                    "description": "Skip the node identifier in subsequent discovery requests for streaming gRPC config types."
+                },
+                "config_validators": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.TypedExtensionConfig"
+                    },
+                    "type": "array",
+                    "description": "A list of config validators that will be executed when a new update is received from the ApiConfigSource. Note that each validator handles a specific xDS service type, and only the validators corresponding to the type url (in ``:ref: DiscoveryResponse`` or ``:ref: DeltaDiscoveryResponse``) will be invoked. If the validator returns false or throws an exception, the config will be rejected by the client, and a NACK will be sent. [#extension-category: envoy.config.validators]"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Api Config Source",
+            "description": "API configuration source. This identifies the API type and cluster that Envoy will use to fetch an xDS API. [#next-free-field: 10]"
+        },
+        "envoy.config.core.v3.BackoffStrategy": {
+            "properties": {
+                "base_interval": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "The base interval to be used for the next back off computation. It should be greater than zero and less than or equal to :ref:`max_interval \u003cenvoy_v3_api_field_config.core.v3.BackoffStrategy.max_interval\u003e`.",
+                    "format": "regex"
+                },
+                "max_interval": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "Specifies the maximum interval between retries. This parameter is optional, but must be greater than or equal to the :ref:`base_interval \u003cenvoy_v3_api_field_config.core.v3.BackoffStrategy.base_interval\u003e` if set. The default is 10 times the :ref:`base_interval \u003cenvoy_v3_api_field_config.core.v3.BackoffStrategy.base_interval\u003e`.",
+                    "format": "regex"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Backoff strategy]",
+            "description": "[#protodoc-title: Backoff strategy]  Configuration defining a jittered exponential back off strategy."
+        },
+        "envoy.config.core.v3.BindConfig": {
+            "properties": {
+                "source_address": {
+                    "$ref": "#/definitions/envoy.config.core.v3.SocketAddress",
+                    "additionalProperties": true,
+                    "description": "The address to bind to when creating a socket."
+                },
+                "freebind": {
+                    "additionalProperties": true,
+                    "type": "boolean",
+                    "description": "Whether to set the ``IP_FREEBIND`` option when creating the socket. When this flag is set to true, allows the :ref:`source_address \u003cenvoy_v3_api_field_config.core.v3.BindConfig.source_address\u003e` to be an IP address that is not configured on the system running Envoy. When this flag is set to false, the option ``IP_FREEBIND`` is disabled on the socket. When this flag is not set (default), the socket is not modified, i.e. the option is neither enabled nor disabled."
+                },
+                "socket_options": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.SocketOption"
+                    },
+                    "type": "array",
+                    "description": "Additional socket options that may not be present in Envoy source code or precompiled binaries."
+                },
+                "extra_source_addresses": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.ExtraSourceAddress"
+                    },
+                    "type": "array",
+                    "description": "Extra source addresses appended to the address specified in the ``source_address`` field. This enables to specify multiple source addresses. The source address selection is determined by :ref:`local_address_selector \u003cenvoy_v3_api_field_config.core.v3.BindConfig.local_address_selector\u003e`."
+                },
+                "additional_source_addresses": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.SocketAddress"
+                    },
+                    "type": "array",
+                    "description": "Deprecated by :ref:`extra_source_addresses \u003cenvoy_v3_api_field_config.core.v3.BindConfig.extra_source_addresses\u003e`"
+                },
+                "local_address_selector": {
+                    "$ref": "#/definitions/envoy.config.core.v3.TypedExtensionConfig",
+                    "additionalProperties": true,
+                    "description": "Custom local address selector to override the default (i.e. :ref:`DefaultLocalAddressSelector \u003cenvoy_v3_api_msg_config.upstream.local_address_selector.v3.DefaultLocalAddressSelector\u003e`). [#extension-category: envoy.upstream.local_address_selector]"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Bind Config",
+            "description": "[#next-free-field: 7]"
+        },
+        "envoy.config.core.v3.DataSource": {
+            "properties": {
+                "filename": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Local filesystem data source."
+                },
+                "inline_bytes": {
+                    "type": "string",
+                    "description": "Bytes inlined in the configuration.",
+                    "format": "binary",
+                    "binaryEncoding": "base64"
+                },
+                "inline_string": {
+                    "type": "string",
+                    "description": "String inlined in the configuration."
+                },
+                "environment_variable": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Environment variable data source."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data Source",
+            "description": "Data source consisting of a file, an inline value, or an environment variable."
+        },
+        "envoy.config.core.v3.EventServiceConfig": {
+            "properties": {
+                "grpc_service": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService",
+                    "additionalProperties": true,
+                    "description": "Specifies the gRPC service that hosts the event reporting service."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Event Service Config",
+            "description": "[#not-implemented-hide:] Configuration of the event reporting service endpoint."
+        },
+        "envoy.config.core.v3.ExtraSourceAddress": {
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/envoy.config.core.v3.SocketAddress",
+                    "additionalProperties": true,
+                    "description": "The additional address to bind."
+                },
+                "socket_options": {
+                    "$ref": "#/definitions/envoy.config.core.v3.SocketOptionsOverride",
+                    "additionalProperties": true,
+                    "description": "Additional socket options that may not be present in Envoy source code or precompiled binaries. If specified, this will override the :ref:`socket_options \u003cenvoy_v3_api_field_config.core.v3.BindConfig.socket_options\u003e` in the BindConfig. If specified with no :ref:`socket_options \u003cenvoy_v3_api_field_config.core.v3.SocketOptionsOverride.socket_options\u003e` or an empty list of :ref:`socket_options \u003cenvoy_v3_api_field_config.core.v3.SocketOptionsOverride.socket_options\u003e`, it means no socket option will apply."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Source Address"
+        },
+        "envoy.config.core.v3.GrpcService": {
+            "properties": {
+                "envoy_grpc": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.EnvoyGrpc",
+                    "additionalProperties": true,
+                    "description": "Envoy's in-built gRPC client. See the :ref:`gRPC services overview \u003carch_overview_grpc_services\u003e` documentation for discussion on gRPC client selection."
+                },
+                "google_grpc": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc",
+                    "additionalProperties": true,
+                    "description": "`Google C++ gRPC client \u003chttps://github.com/grpc/grpc\u003e`_ See the :ref:`gRPC services overview \u003carch_overview_grpc_services\u003e` documentation for discussion on gRPC client selection."
+                },
+                "timeout": {
+                    "pattern": "^([0-9]+\\.?[0-9]*|\\.[0-9]+)s$",
+                    "type": "string",
+                    "description": "The timeout for the gRPC request. This is the timeout for a specific request.",
+                    "format": "regex"
+                },
+                "initial_metadata": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.HeaderValue"
+                    },
+                    "type": "array",
+                    "description": "Additional metadata to include in streams initiated to the GrpcService. This can be used for scenarios in which additional ad hoc authorization headers (e.g. ``x-foo-bar: baz-key``) are to be injected. For more information, including details on header value syntax, see the documentation on :ref:`custom request headers \u003cconfig_http_conn_man_headers_custom_request_headers\u003e`."
+                },
+                "retry_policy": {
+                    "$ref": "#/definitions/envoy.config.core.v3.RetryPolicy",
+                    "additionalProperties": true,
+                    "description": "Optional default retry policy for streams toward the service. If an async stream doesn't have retry policy configured in its stream options, this retry policy is used."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: gRPC services]",
+            "description": "[#protodoc-title: gRPC services]  gRPC service configuration. This is used by :ref:`ApiConfigSource \u003cenvoy_v3_api_msg_config.core.v3.ApiConfigSource\u003e` and filter configurations. [#next-free-field: 7]"
+        },
+        "envoy.config.core.v3.GrpcService.EnvoyGrpc": {
+            "properties": {
+                "cluster_name": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The name of the upstream gRPC cluster. SSL credentials will be supplied in the :ref:`Cluster \u003cenvoy_v3_api_msg_config.cluster.v3.Cluster\u003e` :ref:`transport_socket \u003cenvoy_v3_api_field_config.cluster.v3.Cluster.transport_socket\u003e`."
+                },
+                "authority": {
+                    "type": "string",
+                    "description": "The ``:authority`` header in the grpc request. If this field is not set, the authority header value will be ``cluster_name``. Note that this authority does not override the SNI. The SNI is provided by the transport socket of the cluster."
+                },
+                "retry_policy": {
+                    "$ref": "#/definitions/envoy.config.core.v3.RetryPolicy",
+                    "additionalProperties": true,
+                    "description": "Indicates the retry policy for re-establishing the gRPC stream This field is optional. If max interval is not provided, it will be set to ten times the provided base interval. Currently only supported for xDS gRPC streams. If not set, xDS gRPC streams default base interval:500ms, maximum interval:30s will be applied."
+                },
+                "max_receive_message_length": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Maximum gRPC message size that is allowed to be received. If a message over this limit is received, the gRPC stream is terminated with the RESOURCE_EXHAUSTED error. This limit is applied to individual messages in the streaming response and not the total size of streaming response. Defaults to 0, which means unlimited."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Envoy Grpc"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc": {
+            "properties": {
+                "target_uri": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The target URI when using the `Google C++ gRPC client \u003chttps://github.com/grpc/grpc\u003e`_. SSL credentials will be supplied in :ref:`channel_credentials \u003cenvoy_v3_api_field_config.core.v3.GrpcService.GoogleGrpc.channel_credentials\u003e`."
+                },
+                "channel_credentials": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelCredentials",
+                    "additionalProperties": true
+                },
+                "call_credentials": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials"
+                    },
+                    "type": "array",
+                    "description": "A set of call credentials that can be composed with `channel credentials \u003chttps://grpc.io/docs/guides/auth.html#credential-types\u003e`_."
+                },
+                "stat_prefix": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The human readable prefix to use when emitting statistics for the gRPC service. .. csv-table::    :header: Name, Type, Description    :widths: 1, 1, 2    streams_total, Counter, Total number of streams opened    streams_closed_\u003cgRPC status code\u003e, Counter, Total streams closed with \u003cgRPC status code\u003e"
+                },
+                "credentials_factory_name": {
+                    "type": "string",
+                    "description": "The name of the Google gRPC credentials factory to use. This must have been registered with Envoy. If this is empty, a default credentials factory will be used that sets up channel credentials based on other configuration parameters."
+                },
+                "config": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "Additional configuration for site-specific customizations of the Google gRPC library."
+                },
+                "per_stream_buffer_limit_bytes": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "How many bytes each stream can buffer internally. If not set an implementation defined default is applied (1MiB)."
+                },
+                "channel_args": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelArgs",
+                    "additionalProperties": true,
+                    "description": "Custom channels args."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Google Grpc",
+            "description": "[#next-free-field: 9]"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials": {
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "description": "Access token credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#ad3a80da696ffdaea943f0f858d7a360d."
+                },
+                "google_compute_engine": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "Google Compute Engine credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#a6beb3ac70ff94bd2ebbd89b8f21d1f61"
+                },
+                "google_refresh_token": {
+                    "type": "string",
+                    "description": "Google refresh token credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#a96901c997b91bc6513b08491e0dca37c."
+                },
+                "service_account_jwt_access": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials",
+                    "additionalProperties": true,
+                    "description": "Service Account JWT Access credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#a92a9f959d6102461f66ee973d8e9d3aa."
+                },
+                "google_iam": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials",
+                    "additionalProperties": true,
+                    "description": "Google IAM credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#a9fc1fc101b41e680d47028166e76f9d0."
+                },
+                "from_plugin": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin",
+                    "additionalProperties": true,
+                    "description": "Custom authenticator credentials. https://grpc.io/grpc/cpp/namespacegrpc.html#a823c6a4b19ffc71fb33e90154ee2ad07. https://grpc.io/docs/guides/auth.html#extending-grpc-to-support-other-authentication-mechanisms."
+                },
+                "sts_service": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.StsService",
+                    "additionalProperties": true,
+                    "description": "Custom security token service which implements OAuth 2.0 token exchange. https://tools.ietf.org/html/draft-ietf-oauth-token-exchange-16 See https://github.com/grpc/grpc/pull/19587."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Call Credentials",
+            "description": "[#next-free-field: 8]"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials": {
+            "properties": {
+                "authorization_token": {
+                    "type": "string"
+                },
+                "authority_selector": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Google IAM Credentials"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata Credentials From Plugin"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials": {
+            "properties": {
+                "json_key": {
+                    "type": "string"
+                },
+                "token_lifetime_seconds": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Service Account JWT Access Credentials"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.CallCredentials.StsService": {
+            "properties": {
+                "token_exchange_service_uri": {
+                    "type": "string",
+                    "description": "URI of the token exchange service that handles token exchange requests. [#comment:TODO(asraa): Add URI validation when implemented. Tracked by https://github.com/bufbuild/protoc-gen-validate/issues/303]"
+                },
+                "resource": {
+                    "type": "string",
+                    "description": "Location of the target service or resource where the client intends to use the requested security token."
+                },
+                "audience": {
+                    "type": "string",
+                    "description": "Logical name of the target service where the client intends to use the requested security token."
+                },
+                "scope": {
+                    "type": "string",
+                    "description": "The desired scope of the requested security token in the context of the service or resource where the token will be used."
+                },
+                "requested_token_type": {
+                    "type": "string",
+                    "description": "Type of the requested security token."
+                },
+                "subject_token_path": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The path of subject token, a security token that represents the identity of the party on behalf of whom the request is being made."
+                },
+                "subject_token_type": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Type of the subject token."
+                },
+                "actor_token_path": {
+                    "type": "string",
+                    "description": "The path of actor token, a security token that represents the identity of the acting party. The acting party is authorized to use the requested security token and act on behalf of the subject."
+                },
+                "actor_token_type": {
+                    "type": "string",
+                    "description": "Type of the actor token."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sts Service",
+            "description": "Security token service configuration that allows Google gRPC to fetch security token from an OAuth 2.0 authorization server. See https://tools.ietf.org/html/draft-ietf-oauth-token-exchange-16 and https://github.com/grpc/grpc/pull/19587. [#next-free-field: 10]"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelArgs": {
+            "properties": {
+                "args": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelArgs.Value",
+                        "additionalProperties": true
+                    },
+                    "type": "object",
+                    "description": "See grpc_types.h GRPC_ARG #defines for keys that work here."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Channel Args",
+            "description": "Channel arguments."
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelArgs.Value": {
+            "properties": {
+                "string_value": {
+                    "type": "string"
+                },
+                "int_value": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Value"
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.ChannelCredentials": {
+            "properties": {
+                "ssl_credentials": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.SslCredentials",
+                    "additionalProperties": true
+                },
+                "google_default": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "https://grpc.io/grpc/cpp/namespacegrpc.html#a6beb3ac70ff94bd2ebbd89b8f21d1f61"
+                },
+                "local_credentials": {
+                    "$ref": "#/definitions/envoy.config.core.v3.GrpcService.GoogleGrpc.GoogleLocalCredentials",
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Channel Credentials",
+            "description": "See https://grpc.io/docs/guides/auth.html#credential-types to understand Channel and Call credential types."
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.GoogleLocalCredentials": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Google Local Credentials",
+            "description": "Local channel credentials. Only UDS is supported for now. See https://github.com/grpc/grpc/pull/15909."
+        },
+        "envoy.config.core.v3.GrpcService.GoogleGrpc.SslCredentials": {
+            "properties": {
+                "root_certs": {
+                    "$ref": "#/definitions/envoy.config.core.v3.DataSource",
+                    "additionalProperties": true,
+                    "description": "PEM encoded server root certificates."
+                },
+                "private_key": {
+                    "$ref": "#/definitions/envoy.config.core.v3.DataSource",
+                    "additionalProperties": true,
+                    "description": "PEM encoded client private key."
+                },
+                "cert_chain": {
+                    "$ref": "#/definitions/envoy.config.core.v3.DataSource",
+                    "additionalProperties": true,
+                    "description": "PEM encoded client certificate chain."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Ssl Credentials",
+            "description": "See https://grpc.io/grpc/cpp/structgrpc_1_1_ssl_credentials_options.html."
+        },
+        "envoy.config.core.v3.HeaderValue": {
+            "properties": {
+                "key": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Header name."
+                },
+                "value": {
+                    "type": "string",
+                    "description": "Header value. The same :ref:`format specifier \u003cconfig_access_log_format\u003e` as used for :ref:`HTTP access logging \u003cconfig_access_log\u003e` applies here, however unknown header values are replaced with the empty string instead of ``-``. Header value is encoded as string. This does not work for non-utf8 characters. Only one of ``value`` or ``raw_value`` can be set."
+                },
+                "raw_value": {
+                    "type": "string",
+                    "description": "Header value is encoded as bytes which can support non-utf8 characters. Only one of ``value`` or ``raw_value`` can be set.",
+                    "format": "binary",
+                    "binaryEncoding": "base64"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Header Value",
+            "description": "Header name/value pair."
+        },
+        "envoy.config.core.v3.RateLimitSettings": {
+            "properties": {
+                "max_tokens": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Maximum number of tokens to be used for rate limiting discovery request calls. If not set, a default value of 100 will be used."
+                },
+                "fill_rate": {
+                    "additionalProperties": true,
+                    "type": "number",
+                    "description": "Rate at which tokens will be filled per second. If not set, a default fill rate of 10 tokens per second will be used. The minimal fill rate is once per year. Lower fill rates will be set to once per year."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rate Limit Settings",
+            "description": "Rate Limit settings to be applied for discovery requests made by Envoy."
+        },
+        "envoy.config.core.v3.RetryPolicy": {
+            "properties": {
+                "retry_back_off": {
+                    "$ref": "#/definitions/envoy.config.core.v3.BackoffStrategy",
+                    "additionalProperties": true,
+                    "description": "Specifies parameters that control :ref:`retry backoff strategy \u003cenvoy_v3_api_msg_config.core.v3.BackoffStrategy\u003e`. This parameter is optional, in which case the default base interval is 1000 milliseconds. The default maximum interval is 10 times the base interval."
+                },
+                "num_retries": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Specifies the allowed number of retries. This parameter is optional and defaults to 1."
+                },
+                "retry_on": {
+                    "type": "string",
+                    "description": "For details, see :ref:`retry_on \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.retry_on\u003e`."
+                },
+                "retry_priority": {
+                    "$ref": "#/definitions/envoy.config.core.v3.RetryPolicy.RetryPriority",
+                    "additionalProperties": true,
+                    "description": "For details, see :ref:`retry_priority \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.retry_priority\u003e`."
+                },
+                "retry_host_predicate": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.RetryPolicy.RetryHostPredicate"
+                    },
+                    "type": "array",
+                    "description": "For details, see :ref:`RetryHostPredicate \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.retry_host_predicate\u003e`."
+                },
+                "host_selection_retry_max_attempts": {
+                    "type": "string",
+                    "description": "For details, see :ref:`host_selection_retry_max_attempts \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.host_selection_retry_max_attempts\u003e`."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retry Policy",
+            "description": "The message specifies the retry policy of remote data source when fetching fails. [#next-free-field: 7]"
+        },
+        "envoy.config.core.v3.RetryPolicy.RetryHostPredicate": {
+            "properties": {
+                "name": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retry Host Predicate",
+            "description": "See :ref:`RetryHostPredicate \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.retry_host_predicate\u003e`."
+        },
+        "envoy.config.core.v3.RetryPolicy.RetryPriority": {
+            "properties": {
+                "name": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retry Priority",
+            "description": "See :ref:`RetryPriority \u003cenvoy_v3_api_field_config.route.v3.RetryPolicy.retry_priority\u003e`."
+        },
+        "envoy.config.core.v3.SocketAddress": {
+            "properties": {
+                "protocol": {
+                    "enum": [
+                        "TCP",
+                        0,
+                        "UDP",
+                        1
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Protocol"
+                },
+                "address": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The address for this socket. :ref:`Listeners \u003cconfig_listeners\u003e` will bind to the address. An empty address is not allowed. Specify ``0.0.0.0`` or ``::`` to bind to any address. [#comment:TODO(zuercher) reinstate when implemented: It is possible to distinguish a Listener address via the prefix/suffix matching in :ref:`FilterChainMatch \u003cenvoy_v3_api_msg_config.listener.v3.FilterChainMatch\u003e`.] When used within an upstream :ref:`BindConfig \u003cenvoy_v3_api_msg_config.core.v3.BindConfig\u003e`, the address controls the source address of outbound connections. For :ref:`clusters \u003cenvoy_v3_api_msg_config.cluster.v3.Cluster\u003e`, the cluster type determines whether the address must be an IP (``STATIC`` or ``EDS`` clusters) or a hostname resolved by DNS (``STRICT_DNS`` or ``LOGICAL_DNS`` clusters). Address resolution can be customized via :ref:`resolver_name \u003cenvoy_v3_api_field_config.core.v3.SocketAddress.resolver_name\u003e`."
+                },
+                "port_value": {
+                    "type": "integer"
+                },
+                "named_port": {
+                    "type": "string",
+                    "description": "This is only valid if :ref:`resolver_name \u003cenvoy_v3_api_field_config.core.v3.SocketAddress.resolver_name\u003e` is specified below and the named resolver is capable of named port resolution."
+                },
+                "resolver_name": {
+                    "type": "string",
+                    "description": "The name of the custom resolver. This must have been registered with Envoy. If this is empty, a context dependent default applies. If the address is a concrete IP address, no resolution will occur. If address is a hostname this should be set for resolution other than DNS. Specifying a custom resolver with ``STRICT_DNS`` or ``LOGICAL_DNS`` will generate an error at runtime."
+                },
+                "ipv4_compat": {
+                    "type": "boolean",
+                    "description": "When binding to an IPv6 address above, this enables `IPv4 compatibility \u003chttps://tools.ietf.org/html/rfc3493#page-11\u003e`_. Binding to ``::`` will allow both IPv4 and IPv6 connections, with peer IPv4 addresses mapped into IPv6 space as ``::FFFF:\u003cIPv4-address\u003e``."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Socket Address",
+            "description": "[#next-free-field: 7]"
+        },
+        "envoy.config.core.v3.SocketOption": {
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "An optional name to give this socket option for debugging, etc. Uniqueness is not required and no special meaning is assumed."
+                },
+                "level": {
+                    "type": "string",
+                    "description": "Corresponding to the level value passed to setsockopt, such as IPPROTO_TCP"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The numeric name as passed to setsockopt"
+                },
+                "int_value": {
+                    "type": "string",
+                    "description": "Because many sockopts take an int value."
+                },
+                "buf_value": {
+                    "type": "string",
+                    "description": "Otherwise it's a byte buffer.",
+                    "format": "binary",
+                    "binaryEncoding": "base64"
+                },
+                "state": {
+                    "enum": [
+                        "STATE_PREBIND",
+                        0,
+                        "STATE_BOUND",
+                        1,
+                        "STATE_LISTENING",
+                        2
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Socket State"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Socket option]",
+            "description": "[#protodoc-title: Socket option]  Generic socket option message. This would be used to set socket options that might not exist in upstream kernels or precompiled Envoy binaries. For example: .. code-block:: json  {    \"description\": \"support tcp keep alive\",    \"state\": 0,    \"level\": 1,    \"name\": 9,    \"int_value\": 1,  } 1 means SOL_SOCKET and 9 means SO_KEEPALIVE on Linux. With the above configuration, `TCP Keep-Alives \u003chttps://www.freesoft.org/CIE/RFC/1122/114.htm\u003e`_ can be enabled in socket with Linux, which can be used in :ref:`listener's\u003cenvoy_v3_api_field_config.listener.v3.Listener.socket_options\u003e` or :ref:`admin's \u003cenvoy_v3_api_field_config.bootstrap.v3.Admin.socket_options\u003e` socket_options etc. It should be noted that the name or level may have different values on different platforms. [#next-free-field: 7]"
+        },
+        "envoy.config.core.v3.SocketOptionsOverride": {
+            "properties": {
+                "socket_options": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.core.v3.SocketOption"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Socket Options Override"
+        },
+        "envoy.config.core.v3.TypedExtensionConfig": {
+            "properties": {
+                "name": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The name of an extension. This is not used to select the extension, instead it serves the role of an opaque identifier."
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "The typed config for the extension. The type URL will be used to identify the extension. In the case that the type URL is ``xds.type.v3.TypedStruct`` (or, for historical reasons, ``udpa.type.v1.TypedStruct``), the inner type URL of ``TypedStruct`` will be utilized. See the :ref:`extension configuration overview \u003cconfig_overview_extension_configuration\u003e` for further details."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Extension configuration]",
+            "description": "[#protodoc-title: Extension configuration]  Message type for extension configuration. [#next-major-version: revisit all existing typed_config that doesn't use this wrapper.]."
+        }
+    }
+}

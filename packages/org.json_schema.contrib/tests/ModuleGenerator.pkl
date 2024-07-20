@@ -18,7 +18,10 @@ module org.json_schema.contrib.tests.ModuleGenerator
 amends "pkl:test"
 
 import "@jsonschema/JsonSchema.pkl"
+import "@jsonschema/Parser.pkl"
 import "../internal/ModuleGenerator.pkl"
+import "../internal/ModulesGenerator.pkl"
+import "@uri/URI.pkl"
 
 examples {
   ["basic"] {
@@ -365,5 +368,19 @@ examples {
       }
     }
     new ModuleGenerator { rootSchema = schema; moduleName = "com.apple.Example" }.moduleNode.render("")
+  }
+  ["coverage"] {
+    for (gen in read*("corpus/*").toMap().entries.flatMap((it) -> new ModulesGenerator {
+      rootSchema = Parser.parse(it.second) as JsonSchema
+      baseUri = URI.parse(it.first)!!
+    }.modules)) {
+      "\(gen.rootSchema.$ref.padEnd(40, " ")) \(gen.baseUri)"
+      for (type in gen.existingTypes.keys) {
+        "  - existing type: \(type.$ref)"
+      }
+      for (type in gen.moduleTypes.keys) {
+        "  - module type: \(type.title)"
+      }
+    }
   }
 }

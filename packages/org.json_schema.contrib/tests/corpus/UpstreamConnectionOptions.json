@@ -1,0 +1,81 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/UpstreamConnectionOptions",
+    "$package": "envoy.config.cluster.v3",
+    "definitions": {
+        "UpstreamConnectionOptions": {
+            "properties": {
+                "tcp_keepalive": {
+                    "$ref": "#/definitions/envoy.config.core.v3.TcpKeepalive",
+                    "additionalProperties": true,
+                    "description": "If set then set SO_KEEPALIVE on the socket to enable TCP Keepalives."
+                },
+                "set_local_interface_name_on_upstream_connections": {
+                    "type": "boolean",
+                    "description": "If enabled, associates the interface name of the local address with the upstream connection. This can be used by extensions during processing of requests. The association mechanism is implementation specific. Defaults to false due to performance concerns."
+                },
+                "happy_eyeballs_config": {
+                    "$ref": "#/definitions/envoy.config.cluster.v3.UpstreamConnectionOptions.HappyEyeballsConfig",
+                    "additionalProperties": true,
+                    "description": "Configurations for happy eyeballs algorithm. Add configs for first_address_family_version and first_address_family_count when sorting destination ip addresses."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Upstream Connection Options"
+        },
+        "envoy.config.cluster.v3.UpstreamConnectionOptions.HappyEyeballsConfig": {
+            "properties": {
+                "first_address_family_version": {
+                    "enum": [
+                        "DEFAULT",
+                        0,
+                        "V4",
+                        1,
+                        "V6",
+                        2
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "First Address Family Version"
+                },
+                "first_address_family_count": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Specify the number of addresses of the first_address_family_version being attempted for connection before the other address family."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Happy Eyeballs Config"
+        },
+        "envoy.config.core.v3.TcpKeepalive": {
+            "properties": {
+                "keepalive_probes": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "Maximum number of keepalive probes to send without response before deciding the connection is dead. Default is to use the OS level configuration (unless overridden, Linux defaults to 9.)"
+                },
+                "keepalive_time": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The number of seconds a connection needs to be idle before keep-alive probes start being sent. Default is to use the OS level configuration (unless overridden, Linux defaults to 7200s (i.e., 2 hours.)"
+                },
+                "keepalive_interval": {
+                    "additionalProperties": true,
+                    "type": "integer",
+                    "description": "The number of seconds between keep-alive probes. Default is to use the OS level configuration (unless overridden, Linux defaults to 75s.)"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Tcp Keepalive"
+        }
+    }
+}

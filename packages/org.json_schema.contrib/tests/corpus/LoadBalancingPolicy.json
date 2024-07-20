@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/LoadBalancingPolicy",
+    "$package": "envoy.config.cluster.v3",
+    "definitions": {
+        "LoadBalancingPolicy": {
+            "properties": {
+                "policies": {
+                    "items": {
+                        "$ref": "#/definitions/envoy.config.cluster.v3.LoadBalancingPolicy.Policy"
+                    },
+                    "type": "array",
+                    "description": "Each client will iterate over the list in order and stop at the first policy that it supports. This provides a mechanism for starting to use new LB policies that are not yet supported by all clients."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Load Balancing Policy",
+            "description": "Extensible load balancing policy configuration. Every LB policy defined via this mechanism will be identified via a unique name using reverse DNS notation. If the policy needs configuration parameters, it must define a message for its own configuration, which will be stored in the config field. The name of the policy will tell clients which type of message they should expect to see in the config field. Note that there are cases where it is useful to be able to independently select LB policies for choosing a locality and for choosing an endpoint within that locality. For example, a given deployment may always use the same policy to choose the locality, but for choosing the endpoint within the locality, some clusters may use weighted-round-robin, while others may use some sort of session-based balancing. This can be accomplished via hierarchical LB policies, where the parent LB policy creates a child LB policy for each locality. For each request, the parent chooses the locality and then delegates to the child policy for that locality to choose the endpoint within the locality. To facilitate this, the config message for the top-level LB policy may include a field of type LoadBalancingPolicy that specifies the child policy."
+        },
+        "envoy.config.cluster.v3.LoadBalancingPolicy.Policy": {
+            "properties": {
+                "typed_extension_config": {
+                    "$ref": "#/definitions/envoy.config.core.v3.TypedExtensionConfig",
+                    "additionalProperties": true,
+                    "description": "[#extension-category: envoy.load_balancing_policies]"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Policy"
+        },
+        "envoy.config.core.v3.TypedExtensionConfig": {
+            "properties": {
+                "name": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "The name of an extension. This is not used to select the extension, instead it serves the role of an opaque identifier."
+                },
+                "typed_config": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "The typed config for the extension. The type URL will be used to identify the extension. In the case that the type URL is ``xds.type.v3.TypedStruct`` (or, for historical reasons, ``udpa.type.v1.TypedStruct``), the inner type URL of ``TypedStruct`` will be utilized. See the :ref:`extension configuration overview \u003cconfig_overview_extension_configuration\u003e` for further details."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Extension configuration]",
+            "description": "[#protodoc-title: Extension configuration]  Message type for extension configuration. [#next-major-version: revisit all existing typed_config that doesn't use this wrapper.]."
+        }
+    }
+}

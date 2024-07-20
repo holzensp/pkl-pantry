@@ -1,3 +1,4 @@
+facts = null
 examples {
   ["basic"] {
     """
@@ -231,5 +232,739 @@ examples {
     }
     
     """
+  }
+  ["coverage"] {
+    "#/definitions/Admin                      corpus/Admin.json"
+    "  - module type: Not Health Check Filter"
+    "  - module type: Traceable Filter"
+    "  - module type: Null Match"
+    "  - module type: Admin"
+    "  - module type: [#protodoc-title: Common access log types]"
+    "  - module type: null"
+    "  - module type: Access Log Filter"
+    "  - module type: And Filter"
+    "  - module type: Comparison Filter"
+    "  - module type: Duration Filter"
+    "  - module type: Extension Filter"
+    "  - module type: Grpc Status Filter"
+    "  - module type: Header Filter"
+    "  - module type: Log Type Filter"
+    "  - module type: Metadata Filter"
+    "  - module type: Or Filter"
+    "  - module type: Response Flag Filter"
+    "  - module type: Runtime Filter"
+    "  - module type: Status Code Filter"
+    "  - module type: Address"
+    "  - module type: Envoy Internal Address"
+    "  - module type: [#protodoc-title: Network addresses]"
+    "  - module type: Runtime U Int 32"
+    "  - module type: Socket Address"
+    "  - module type: [#protodoc-title: Socket option]"
+    "  - module type: Header Matcher"
+    "  - module type: [#protodoc-title: Number matcher]"
+    "  - module type: List Matcher"
+    """
+      - module type: MetadataMatcher provides a general interface to check if a given value is matched in
+     :ref:`Metadata <envoy_v3_api_msg_config.core.v3.Metadata>`. It uses `filter` and `path` to retrieve the value
+     from the Metadata and then check if it's matched to the specified value.
+    
+     For example, for the following Metadata:
+    
+     .. code-block:: yaml
+    
+        filter_metadata:
+          envoy.filters.http.rbac:
+            fields:
+              a:
+                struct_value:
+                  fields:
+                    b:
+                      struct_value:
+                        fields:
+                          c:
+                            string_value: pro
+                    t:
+                      list_value:
+                        values:
+                          - string_value: m
+                          - string_value: n
+    
+     The following MetadataMatcher is matched as the path [a, b, c] will retrieve a string value "pro"
+     from the Metadata which is matched to the specified prefix match.
+    
+     .. code-block:: yaml
+    
+        filter: envoy.filters.http.rbac
+        path:
+        - key: a
+        - key: b
+        - key: c
+        value:
+          string_match:
+            prefix: pr
+    
+     The following MetadataMatcher is matched as the code will match one of the string values in the
+     list at the path [a, t].
+    
+     .. code-block:: yaml
+    
+        filter: envoy.filters.http.rbac
+        path:
+        - key: a
+        - key: t
+        value:
+          list_match:
+            one_of:
+              string_match:
+                exact: m
+    
+     An example use of MetadataMatcher is specifying additional metadata in envoy.filters.http.rbac to
+     enforce access control based on dynamic metadata in a request. See :ref:`Permission
+     <envoy_v3_api_msg_config.rbac.v3.Permission>` and :ref:`Principal
+     <envoy_v3_api_msg_config.rbac.v3.Principal>`.
+    """
+    "  - module type: Path Segment"
+    "  - module type: Or Matcher"
+    "  - module type: [#protodoc-title: Regex matcher]"
+    "  - module type: Google RE 2"
+    "  - module type: [#protodoc-title: String matcher]"
+    "  - module type: [#protodoc-title: Value matcher]"
+    "  - module type: Double Range"
+    "  - module type: Fractional Percent"
+    "  - module type: [#protodoc-title: Range]"
+    "  - module type: Typed Extension Config"
+    "  - module type: null"
+    "#/definitions/Bootstrap                  corpus/Bootstrap.json"
+    "  - module type: Not Health Check Filter"
+    "  - module type: Traceable Filter"
+    "  - module type: Admin Layer"
+    "  - module type: Locality Weighted Lb Config"
+    "  - module type: Aggregated Config Source"
+    "  - module type: Google Local Credentials"
+    "  - module type: Proper Case Words"
+    "  - module type: Exact Balance"
+    "  - module type: Internal Listener Config"
+    "  - module type: Null Match"
+    "  - module type: Google RE 2"
+    """
+      - module type: [#protodoc-title: Bootstrap]
+     This proto is supplied via the :option:`-c` CLI flag and acts as the root
+     of the Envoy v3 configuration. See the :ref:`v3 configuration overview
+     <config_overview_bootstrap>` for more detail.
+    """
+    "  - module type: [#protodoc-title: Common access log types]"
+    "  - module type: null"
+    "  - module type: Access Log Filter"
+    "  - module type: And Filter"
+    "  - module type: Comparison Filter"
+    "  - module type: Duration Filter"
+    "  - module type: Extension Filter"
+    "  - module type: Grpc Status Filter"
+    "  - module type: Header Filter"
+    "  - module type: Log Type Filter"
+    "  - module type: Metadata Filter"
+    "  - module type: Or Filter"
+    "  - module type: Response Flag Filter"
+    "  - module type: Runtime Filter"
+    "  - module type: Status Code Filter"
+    "  - module type: Admin"
+    "  - module type: Application Log Config"
+    "  - module type: Log Format"
+    "  - module type: Deferred Stat Options"
+    "  - module type: Dynamic Resources"
+    "  - module type: Grpc Async Client Manager Config"
+    "  - module type: Static Resources"
+    "  - module type: Cluster Manager"
+    "  - module type: Outlier Detection"
+    "  - module type: Custom Inline Header"
+    "  - module type: Fatal Action"
+    "  - module type: Layered Runtime"
+    "  - module type: Runtime Layer"
+    "  - module type: Disk Layer"
+    "  - module type: Rtds Layer"
+    "  - module type: Watchdog"
+    "  - module type: Watchdog Action"
+    "  - module type: Watchdogs"
+    "  - module type: [#protodoc-title: Circuit breakers]"
+    "  - module type: Thresholds"
+    "  - module type: Retry Budget"
+    "  - module type: Cluster"
+    "  - module type: Common Lb Config"
+    "  - module type: Consistent Hashing Lb Config"
+    "  - module type: Zone Aware Lb Config"
+    "  - module type: Custom Cluster Type"
+    "  - module type: null"
+    "  - module type: Eds Cluster Config"
+    "  - module type: Lb Subset Config"
+    "  - module type: Lb Subset Selector"
+    "  - module type: Least Request Lb Config"
+    "  - module type: Maglev Lb Config"
+    "  - module type: Original Dst Lb Config"
+    "  - module type: Preconnect Policy"
+    "  - module type: Refresh Rate"
+    "  - module type: Ring Hash Lb Config"
+    "  - module type: Round Robin Lb Config"
+    "  - module type: Slow Start Config"
+    "  - module type: Transport Socket Match"
+    """
+      - module type: [#protodoc-title: Upstream network filters]
+     Upstream network filters apply to the connections to the upstream cluster hosts.
+    """
+    "  - module type: null"
+    "  - module type: Load Balancing Policy"
+    "  - module type: Policy"
+    "  - module type: [#protodoc-title: Outlier detection]"
+    "  - module type: Track Cluster Stats"
+    "  - module type: Upstream Connection Options"
+    "  - module type: Happy Eyeballs Config"
+    "  - module type: Address"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Bind Config"
+    "  - module type: Build Version"
+    "  - module type: Cidr Range"
+    "  - module type: Config Source"
+    "  - module type: Data Source"
+    "  - module type: Dns Resolution Config"
+    "  - module type: [#protodoc-title: Resolver]"
+    "  - module type: Envoy Internal Address"
+    "  - module type: Event Service Config"
+    "  - module type: Extension"
+    "  - module type: Extension Config Source"
+    "  - module type: null"
+    "  - module type: Extra Source Address"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Header Value Option"
+    "  - module type: Health Check"
+    "  - module type: Custom Health Check"
+    "  - module type: Grpc Health Check"
+    "  - module type: Http Health Check"
+    "  - module type: Payload"
+    "  - module type: Tcp Health Check"
+    "  - module type: Tls Options"
+    "  - module type: Health Status Set"
+    "  - module type: Http 1 Protocol Options"
+    "  - module type: Header Key Format"
+    "  - module type: Http 2 Protocol Options"
+    "  - module type: Settings Parameter"
+    "  - module type: Http Protocol Options"
+    "  - module type: Keepalive Settings"
+    "  - module type: Locality"
+    "  - module type: Metadata"
+    "  - module type: Node"
+    "  - module type: Path Config Source"
+    "  - module type: [#protodoc-title: Network addresses]"
+    "  - module type: Quic Keep Alive Settings"
+    "  - module type: Quic Protocol Options"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Runtime Double"
+    "  - module type: Runtime Feature Flag"
+    "  - module type: Runtime U Int 32"
+    "  - module type: Self Config Source"
+    "  - module type: Socket Address"
+    "  - module type: [#protodoc-title: Socket option]"
+    "  - module type: Socket Options Override"
+    "  - module type: Tcp Keepalive"
+    "  - module type: Transport Socket"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: UDP socket config]"
+    "  - module type: Upstream Http Protocol Options"
+    "  - module type: Watched Directory"
+    """
+      - module type: [#protodoc-title: Endpoint configuration]
+     Endpoint discovery :ref:`architecture overview <arch_overview_service_discovery_types_eds>`
+    """
+    "  - module type: Policy"
+    "  - module type: Drop Overload"
+    "  - module type: [#protodoc-title: Endpoints]"
+    "  - module type: Additional Address"
+    "  - module type: Health Check Config"
+    "  - module type: Lb Endpoint"
+    "  - module type: Leds Cluster Locality Config"
+    "  - module type: Locality Lb Endpoints"
+    "  - module type: Lb Endpoint List"
+    """
+      - module type: [#protodoc-title: Listener configuration]
+     Listener :ref:`configuration overview <config_listeners>`
+    """
+    "  - module type: [#protodoc-title: API listener]"
+    "  - module type: null"
+    """
+      - module type: [#protodoc-title: Listener components]
+     Listener :ref:`configuration overview <config_listeners>`
+    """
+    "  - module type: null"
+    "  - module type: Filter Chain"
+    "  - module type: On Demand Configuration"
+    "  - module type: Filter Chain Match"
+    "  - module type: Listener"
+    "  - module type: Connection Balance Config"
+    "  - module type: Deprecated V 1"
+    "  - module type: Listener Filter"
+    "  - module type: null"
+    "  - module type: Listener Filter Chain Match Predicate"
+    "  - module type: Match Set"
+    "  - module type: [#protodoc-title: QUIC listener config]"
+    """
+      - module type: [#protodoc-title: UDP listener config]
+     Listener :ref:`configuration overview <config_listeners>`
+    """
+    "  - module type: Histogram Bucket Settings"
+    "  - module type: Stats Config"
+    "  - module type: Stats Matcher"
+    """
+      - module type: [#protodoc-title: Stats]
+     Statistics :ref:`architecture overview <arch_overview_statistics>`.
+    """
+    "  - module type: Tag Specifier"
+    "  - module type: Buffer Factory Config"
+    "  - module type: Load Shed Point"
+    "  - module type: Overload Action"
+    "  - module type: null"
+    "  - module type: Overload Manager"
+    """
+      - module type: The Overload Manager provides an extensible framework to protect Envoy instances
+     from overload of various resources (memory, cpu, file descriptors, etc).
+     It monitors a configurable set of resources and notifies registered listeners
+     when triggers related to those resources fire.
+    """
+    "  - module type: Scaled Trigger"
+    "  - module type: Threshold Trigger"
+    "  - module type: Trigger"
+    "  - module type: Header Matcher"
+    """
+      - module type: [#protodoc-title: Tracing]
+     Tracing :ref:`architecture overview <arch_overview_tracing>`.
+    """
+    "  - module type: Http"
+    "  - module type: Certificate Provider Plugin Instance"
+    "  - module type: Certificate Validation Context"
+    "  - module type: [#protodoc-title: Secrets configuration]"
+    "  - module type: Private Key Provider"
+    "  - module type: Secret"
+    "  - module type: Subject Alt Name Matcher"
+    "  - module type: Tls Certificate"
+    "  - module type: Tls Session Ticket Keys"
+    "  - module type: [#protodoc-title: Number matcher]"
+    "  - module type: List Matcher"
+    "  - module type: List String Matcher"
+    """
+      - module type: MetadataMatcher provides a general interface to check if a given value is matched in
+     :ref:`Metadata <envoy_v3_api_msg_config.core.v3.Metadata>`. It uses `filter` and `path` to retrieve the value
+     from the Metadata and then check if it's matched to the specified value.
+    
+     For example, for the following Metadata:
+    
+     .. code-block:: yaml
+    
+        filter_metadata:
+          envoy.filters.http.rbac:
+            fields:
+              a:
+                struct_value:
+                  fields:
+                    b:
+                      struct_value:
+                        fields:
+                          c:
+                            string_value: pro
+                    t:
+                      list_value:
+                        values:
+                          - string_value: m
+                          - string_value: n
+    
+     The following MetadataMatcher is matched as the path [a, b, c] will retrieve a string value "pro"
+     from the Metadata which is matched to the specified prefix match.
+    
+     .. code-block:: yaml
+    
+        filter: envoy.filters.http.rbac
+        path:
+        - key: a
+        - key: b
+        - key: c
+        value:
+          string_match:
+            prefix: pr
+    
+     The following MetadataMatcher is matched as the code will match one of the string values in the
+     list at the path [a, t].
+    
+     .. code-block:: yaml
+    
+        filter: envoy.filters.http.rbac
+        path:
+        - key: a
+        - key: t
+        value:
+          list_match:
+            one_of:
+              string_match:
+                exact: m
+    
+     An example use of MetadataMatcher is specifying additional metadata in envoy.filters.http.rbac to
+     enforce access control based on dynamic metadata in a request. See :ref:`Permission
+     <envoy_v3_api_msg_config.rbac.v3.Permission>` and :ref:`Principal
+     <envoy_v3_api_msg_config.rbac.v3.Principal>`.
+    """
+    "  - module type: Path Segment"
+    "  - module type: Or Matcher"
+    "  - module type: [#protodoc-title: Regex matcher]"
+    "  - module type: Google RE 2"
+    "  - module type: [#protodoc-title: String matcher]"
+    "  - module type: [#protodoc-title: Value matcher]"
+    "  - module type: [#protodoc-title: Metadata]"
+    "  - module type: Path Segment"
+    "  - module type: Double Range"
+    "  - module type: Fractional Percent"
+    "  - module type: Int 32 Range"
+    "  - module type: [#protodoc-title: Range]"
+    "  - module type: [#protodoc-title: Percent]"
+    "  - module type: [#protodoc-title: Semantic version]"
+    "  - module type: Authority"
+    "  - module type: Context Params"
+    "  - module type: Typed Extension Config"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: Unified Matcher API]"
+    "  - module type: Matcher List"
+    "  - module type: Field Matcher"
+    "  - module type: Predicate"
+    "  - module type: Predicate List"
+    "  - module type: Single Predicate"
+    "  - module type: Matcher Tree"
+    "  - module type: Match Map"
+    "  - module type: On Match"
+    "  - module type: [#protodoc-title: Regex matcher]"
+    "  - module type: [#protodoc-title: String matcher]"
+    "#/definitions/CircuitBreakers            corpus/CircuitBreakers.json"
+    "  - module type: [#protodoc-title: Circuit breakers]"
+    "  - module type: Thresholds"
+    "  - module type: Retry Budget"
+    "  - module type: [#protodoc-title: Percent]"
+    "#/definitions/Cluster                    corpus/Cluster.json"
+    "  - module type: Locality Weighted Lb Config"
+    "  - module type: Aggregated Config Source"
+    "  - module type: Google Local Credentials"
+    "  - module type: Proper Case Words"
+    "  - module type: Cluster"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: Circuit breakers]"
+    "  - module type: Thresholds"
+    "  - module type: Retry Budget"
+    "  - module type: Common Lb Config"
+    "  - module type: Consistent Hashing Lb Config"
+    "  - module type: Zone Aware Lb Config"
+    "  - module type: Custom Cluster Type"
+    "  - module type: null"
+    "  - module type: Eds Cluster Config"
+    "  - module type: Lb Subset Config"
+    "  - module type: Lb Subset Selector"
+    "  - module type: Least Request Lb Config"
+    "  - module type: Maglev Lb Config"
+    "  - module type: Original Dst Lb Config"
+    "  - module type: Preconnect Policy"
+    "  - module type: Refresh Rate"
+    "  - module type: Ring Hash Lb Config"
+    "  - module type: Round Robin Lb Config"
+    "  - module type: Slow Start Config"
+    "  - module type: Transport Socket Match"
+    """
+      - module type: [#protodoc-title: Upstream network filters]
+     Upstream network filters apply to the connections to the upstream cluster hosts.
+    """
+    "  - module type: null"
+    "  - module type: Load Balancing Policy"
+    "  - module type: Policy"
+    "  - module type: [#protodoc-title: Outlier detection]"
+    "  - module type: Track Cluster Stats"
+    "  - module type: Upstream Connection Options"
+    "  - module type: Happy Eyeballs Config"
+    "  - module type: Address"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Bind Config"
+    "  - module type: Config Source"
+    "  - module type: Data Source"
+    "  - module type: Dns Resolution Config"
+    "  - module type: [#protodoc-title: Resolver]"
+    "  - module type: Envoy Internal Address"
+    "  - module type: Event Service Config"
+    "  - module type: Extension Config Source"
+    "  - module type: null"
+    "  - module type: Extra Source Address"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Header Value Option"
+    "  - module type: Health Check"
+    "  - module type: Custom Health Check"
+    "  - module type: Grpc Health Check"
+    "  - module type: Http Health Check"
+    "  - module type: Payload"
+    "  - module type: Tcp Health Check"
+    "  - module type: Tls Options"
+    "  - module type: Health Status Set"
+    "  - module type: Http 1 Protocol Options"
+    "  - module type: Header Key Format"
+    "  - module type: Http 2 Protocol Options"
+    "  - module type: Settings Parameter"
+    "  - module type: Http Protocol Options"
+    "  - module type: Keepalive Settings"
+    "  - module type: Locality"
+    "  - module type: Metadata"
+    "  - module type: Path Config Source"
+    "  - module type: [#protodoc-title: Network addresses]"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Runtime Double"
+    "  - module type: Self Config Source"
+    "  - module type: Socket Address"
+    "  - module type: [#protodoc-title: Socket option]"
+    "  - module type: Socket Options Override"
+    "  - module type: Tcp Keepalive"
+    "  - module type: Transport Socket"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: Upstream Http Protocol Options"
+    "  - module type: Watched Directory"
+    """
+      - module type: [#protodoc-title: Endpoint configuration]
+     Endpoint discovery :ref:`architecture overview <arch_overview_service_discovery_types_eds>`
+    """
+    "  - module type: Policy"
+    "  - module type: Drop Overload"
+    "  - module type: [#protodoc-title: Endpoints]"
+    "  - module type: Additional Address"
+    "  - module type: Health Check Config"
+    "  - module type: Lb Endpoint"
+    "  - module type: Leds Cluster Locality Config"
+    "  - module type: Locality Lb Endpoints"
+    "  - module type: Lb Endpoint List"
+    "  - module type: [#protodoc-title: Regex matcher]"
+    "  - module type: Google RE 2"
+    "  - module type: [#protodoc-title: String matcher]"
+    "  - module type: [#protodoc-title: Metadata]"
+    "  - module type: Path Segment"
+    "  - module type: Fractional Percent"
+    "  - module type: [#protodoc-title: Range]"
+    "  - module type: [#protodoc-title: Percent]"
+    "  - module type: Authority"
+    "  - module type: Typed Extension Config"
+    "  - module type: null"
+    "#/definitions/ClusterCollection          corpus/ClusterCollection.json"
+    "  - module type: [#protodoc-title: Cluster configuration]"
+    "  - module type: Collection Entry"
+    "  - module type: Inline Entry"
+    "  - module type: null"
+    "  - module type: Context Params"
+    "  - module type: Resource Locator"
+    "  - module type: Directive"
+    "#/definitions/ClusterManager             corpus/ClusterManager.json"
+    "  - module type: Google Local Credentials"
+    "  - module type: Cluster Manager"
+    "  - module type: Outlier Detection"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Bind Config"
+    "  - module type: Data Source"
+    "  - module type: Event Service Config"
+    "  - module type: Extra Source Address"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: null"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Socket Address"
+    "  - module type: [#protodoc-title: Socket option]"
+    "  - module type: Socket Options Override"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "#/definitions/CustomInlineHeader         corpus/CustomInlineHeader.json"
+    "  - module type: Custom Inline Header"
+    "#/definitions/FatalAction                corpus/FatalAction.json"
+    "  - module type: Fatal Action"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "#/definitions/Filter                     corpus/Filter.json"
+    "  - module type: Aggregated Config Source"
+    "  - module type: Google Local Credentials"
+    """
+      - module type: [#protodoc-title: Upstream network filters]
+     Upstream network filters apply to the connections to the upstream cluster hosts.
+    """
+    "  - module type: null"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Config Source"
+    "  - module type: Data Source"
+    "  - module type: Extension Config Source"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: null"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Path Config Source"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Self Config Source"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: Watched Directory"
+    "  - module type: Authority"
+    "#/definitions/LayeredRuntime             corpus/LayeredRuntime.json"
+    "  - module type: Admin Layer"
+    "  - module type: Aggregated Config Source"
+    "  - module type: Google Local Credentials"
+    "  - module type: Layered Runtime"
+    "  - module type: Runtime Layer"
+    "  - module type: Disk Layer"
+    "  - module type: Rtds Layer"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Config Source"
+    "  - module type: Data Source"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: null"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Path Config Source"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Self Config Source"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: Watched Directory"
+    "  - module type: Authority"
+    "#/definitions/LoadBalancingPolicy        corpus/LoadBalancingPolicy.json"
+    "  - module type: Load Balancing Policy"
+    "  - module type: Policy"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "#/definitions/OutlierDetection           corpus/OutlierDetection.json"
+    "  - module type: [#protodoc-title: Outlier detection]"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "#/definitions/Runtime                    corpus/Runtime.json"
+    "  - module type: Runtime"
+    "#/definitions/RuntimeLayer               corpus/RuntimeLayer.json"
+    "  - module type: Admin Layer"
+    "  - module type: Aggregated Config Source"
+    "  - module type: Google Local Credentials"
+    "  - module type: Runtime Layer"
+    "  - module type: Disk Layer"
+    "  - module type: Rtds Layer"
+    "  - module type: Api Config Source"
+    "  - module type: [#protodoc-title: Backoff strategy]"
+    "  - module type: Config Source"
+    "  - module type: Data Source"
+    "  - module type: [#protodoc-title: gRPC services]"
+    "  - module type: Envoy Grpc"
+    "  - module type: Google Grpc"
+    "  - module type: Call Credentials"
+    "  - module type: Google IAM Credentials"
+    "  - module type: Metadata Credentials From Plugin"
+    "  - module type: null"
+    "  - module type: Service Account JWT Access Credentials"
+    "  - module type: Sts Service"
+    "  - module type: Channel Args"
+    "  - module type: Value"
+    "  - module type: Channel Credentials"
+    "  - module type: Ssl Credentials"
+    "  - module type: Header Value"
+    "  - module type: Path Config Source"
+    "  - module type: Rate Limit Settings"
+    "  - module type: Retry Policy"
+    "  - module type: Retry Host Predicate"
+    "  - module type: Retry Priority"
+    "  - module type: Self Config Source"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: Watched Directory"
+    "  - module type: Authority"
+    "#/definitions/TrackClusterStats          corpus/TrackClusterStats.json"
+    "  - module type: Track Cluster Stats"
+    "#/definitions/UpstreamConnectionOptions  corpus/UpstreamConnectionOptions.json"
+    "  - module type: Upstream Connection Options"
+    "  - module type: Happy Eyeballs Config"
+    "  - module type: Tcp Keepalive"
+    "#/definitions/Watchdog                   corpus/Watchdog.json"
+    "  - module type: Watchdog"
+    "  - module type: Watchdog Action"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: Percent]"
+    "#/definitions/Watchdogs                  corpus/Watchdogs.json"
+    "  - module type: Watchdogs"
+    "  - module type: Watchdog"
+    "  - module type: Watchdog Action"
+    "  - module type: [#protodoc-title: Extension configuration]"
+    "  - module type: null"
+    "  - module type: [#protodoc-title: Percent]"
   }
 }

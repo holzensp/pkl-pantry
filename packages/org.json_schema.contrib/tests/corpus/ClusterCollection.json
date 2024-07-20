@@ -1,0 +1,156 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/ClusterCollection",
+    "$package": "envoy.config.cluster.v3",
+    "definitions": {
+        "ClusterCollection": {
+            "properties": {
+                "entries": {
+                    "$ref": "#/definitions/xds.core.v3.CollectionEntry",
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "[#protodoc-title: Cluster configuration]",
+            "description": "[#protodoc-title: Cluster configuration]  Cluster list collections. Entries are ``Cluster`` resources or references. [#not-implemented-hide:]"
+        },
+        "xds.core.v3.CollectionEntry": {
+            "properties": {
+                "locator": {
+                    "$ref": "#/definitions/xds.core.v3.ResourceLocator",
+                    "additionalProperties": true,
+                    "description": "A resource locator describing how the member resource is to be located."
+                },
+                "inline_entry": {
+                    "$ref": "#/definitions/xds.core.v3.CollectionEntry.InlineEntry",
+                    "additionalProperties": true,
+                    "description": "The resource is inlined in the list collection."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Collection Entry",
+            "description": "xDS collection resource wrapper. This encapsulates a xDS resource when appearing inside a list collection resource. List collection resources are regular Resource messages of type: .. code-block:: proto   message \u003cT\u003eCollection {     repeated CollectionEntry resources = 1;   }"
+        },
+        "xds.core.v3.CollectionEntry.InlineEntry": {
+            "properties": {
+                "name": {
+                    "pattern": "^[0-9a-zA-Z_\\-\\.~:]+$",
+                    "type": "string",
+                    "description": "Optional name to describe the inlined resource. Resource names must match ``[a-zA-Z0-9_-\\./]+`` (TODO(htuch): turn this into a PGV constraint once finalized, probably should be a RFC3986 pchar). This name allows reference via the #entry directive in ResourceLocator."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "The resource's logical version. It is illegal to have the same named xDS resource name at a given version with different resource payloads."
+                },
+                "resource": {
+                    "properties": {
+                        "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows: * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.) Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com. As of May 2023, there are no widely used type server implementations and no plans to implement one. Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type.",
+                            "format": "binary",
+                            "binaryEncoding": "base64"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "type": "object",
+                    "description": "The resource payload, including type URL."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Inline Entry",
+            "description": "Inlined resource entry."
+        },
+        "xds.core.v3.ContextParams": {
+            "properties": {
+                "params": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context Params",
+            "description": "Additional parameters that can be used to select resource variants. These include any global context parameters, per-resource type client feature capabilities and per-resource type functional attributes. All per-resource type attributes will be `xds.resource.` prefixed and some of these are documented below: `xds.resource.listening_address`: The value is \"IP:port\" (e.g. \"10.1.1.3:8080\") which is   the listening address of a Listener. Used in a Listener resource query."
+        },
+        "xds.core.v3.ResourceLocator": {
+            "properties": {
+                "scheme": {
+                    "enum": [
+                        "XDSTP",
+                        0,
+                        "HTTP",
+                        1,
+                        "FILE",
+                        2
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Scheme"
+                },
+                "id": {
+                    "type": "string",
+                    "description": "Opaque identifier for the resource. Any '/' will not be escaped during URI encoding and will form part of the URI path. This may end with ‘*’ for glob collection references."
+                },
+                "authority": {
+                    "type": "string",
+                    "description": "Logical authority for resource (not necessarily transport network address). Authorities are opaque in the xDS API, data-plane load balancers will map them to concrete network transports such as an xDS management server, e.g. via envoy.config.core.v3.ConfigSource."
+                },
+                "resource_type": {
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Fully qualified resource type (as in type URL without types.googleapis.com/ prefix)."
+                },
+                "exact_context": {
+                    "$ref": "#/definitions/xds.core.v3.ContextParams",
+                    "additionalProperties": true,
+                    "description": "Additional parameters that can be used to select resource variants. Matches must be exact, i.e. all context parameters must match exactly and there must be no additional context parameters set on the matched resource."
+                },
+                "directives": {
+                    "items": {
+                        "$ref": "#/definitions/xds.core.v3.ResourceLocator.Directive"
+                    },
+                    "type": "array",
+                    "description": "A list of directives that appear in the xDS resource locator #fragment. When encoding to URI form, directives are percent encoded with comma separation."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Resource Locator",
+            "description": "xDS resource locators identify a xDS resource name and instruct the data-plane load balancer on how the resource may be located. Resource locators have a canonical xdstp:// URI representation:   xdstp://{authority}/{type_url}/{id}?{context_params}{#directive,*} where context_params take the form of URI query parameters. Resource locators have a similar canonical http:// URI representation:   http://{authority}/{type_url}/{id}?{context_params}{#directive,*} Resource locators also have a simplified file:// URI representation:   file:///{id}{#directive,*}"
+        },
+        "xds.core.v3.ResourceLocator.Directive": {
+            "properties": {
+                "alt": {
+                    "$ref": "#/definitions/xds.core.v3.ResourceLocator",
+                    "additionalProperties": true,
+                    "description": "An alternative resource locator for fallback if the resource is unavailable. For example, take the resource locator:   xdstp://foo/some-type/some-route-table#alt=xdstp://bar/some-type/another-route-table If the data-plane load balancer is unable to reach `foo` to fetch the resource, it will fallback to `bar`. Alternative resources do not need to have equivalent content, but they should be functional substitutes."
+                },
+                "entry": {
+                    "minLength": 1,
+                    "pattern": "^[0-9a-zA-Z_\\-\\./~:]+$",
+                    "type": "string",
+                    "description": "List collections support inlining of resources via the entry field in Resource. These inlined Resource objects may have an optional name field specified. When specified, the entry directive allows ResourceLocator to directly reference these inlined resources, e.g. xdstp://.../foo#entry=bar."
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Directive",
+            "description": "Directives provide information to data-plane load balancers on how xDS resource names are to be interpreted and potentially further resolved. For example, they may provide alternative resource locators for when primary resolution fails. Directives are not part of resource names and do not appear in a xDS transport discovery request. When encoding to URIs, directives take the form: \u003cdirective name\u003e=\u003cstring representation of directive value\u003e For example, we can have alt=xdstp://foo/bar or entry=some%20thing. Each directive value type may have its own string encoding, in the case of ResourceLocator there is a recursive URI encoding. Percent encoding applies to the URI encoding of the directive value. Multiple directives are comma-separated, so the reserved characters that require percent encoding in a directive value are [',', '#', '[', ']', '%']. These are the RFC3986 fragment reserved characters with the addition of the xDS scheme specific ','. See https://tools.ietf.org/html/rfc3986#page-49 for further details on URI ABNF and reserved characters."
+        }
+    }
+}
