@@ -287,10 +287,22 @@ function gatherAllSchemas(schema: JsonSchema, baseUri: URI): List<Pair<JsonSchem
 
 local schemas = gatherAllSchemas(rootSchema, baseUri)
 
-modules: List<ModuleGenerator> = schemas.fold(List(), (acc: List<ModuleGenerator>, schema) ->
-  acc.add(new ModuleGenerator {
-    rootSchema = schema.first
-    baseUri = schema.second
-    existingTypes = acc.flatMap((it) -> it.moduleTypes.entries).toMap((it) -> it.first, (it) -> it.second)
-  })
-)
+modules: Listing<ModuleGenerator> = new {
+  local theseModules = this
+  default = (i) -> new ModuleGenerator {
+    when (i > 0) {
+      existingTypes = new Listing {
+        for (j in IntSeq(0, i - 1)) {
+          theseModules[j].moduleTypes.entries
+        }
+      }.toList().toMap((it) -> it.first, (it) -> it.second)
+    }
+  }
+
+  for (schema in schemas) {
+    new {
+      rootSchema = schema.first
+      baseUri = schema.second
+    }
+  }
+}
