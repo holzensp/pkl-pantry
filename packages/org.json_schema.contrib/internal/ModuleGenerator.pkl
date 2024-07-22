@@ -27,6 +27,7 @@ import "@syntax/DocCommentNode.pkl"
 import "@jsonschema/JsonSchema.pkl"
 import "@uri/URI.pkl"
 import "utils.pkl"
+import "singularize.pkl"
 import "TypesGenerator.pkl"
 import "../ref.pkl"
 import "Type.pkl"
@@ -216,11 +217,70 @@ local function determineTypeName(path: List<String>, candidateName: String, exis
     else
       candidateType
 
+
+local function findMatchingSchemasInMapping(
+  m: Mapping<String, JsonSchema.Schema>?,
+  path: List<String>,
+  predicate: (JsonSchema) -> Boolean
+): Map<List<String>, JsonSchema> =
+  if (m == null)
+    Map()
+  else
+    m
+      .toMap()
+      .filter((_, value) -> value is JsonSchema)
+      .flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName), predicate))
+
+local function findMatchingSchemasInListing(
+  l: Listing<JsonSchema.Schema>?,
+  path: List<String>,
+  namePart: String,
+  predicate: (JsonSchema) -> Boolean
+): Map<List<String>, JsonSchema> =
+  if (l == null)
+    Map()
+  else
+    l.toList()
+      .filterIsInstance(JsonSchema.getClass())
+      .mapIndexed((idx, schema) -> Pair(idx, schema))
+      .toMap((p) -> p.first, (p) -> p.second)
+      .flatMap((idx, schema) ->
+      _findMatchingSubSchemas(
+        schema,
+        path.add((path.lastOrNull ?? "") + namePart + idx.toString()),
+        predicate
+      )
+    )
+
+function _findMatchingSubSchemas(
+  schema: JsonSchema,
+  path: List<String>,
+  predicate: (JsonSchema) -> Boolean
+): Map<List<String>, JsonSchema> = new Mapping {
+  ...(if (predicate.apply(schema))
+    Map(path, schema)
+  else
+    Map())
+  + Map(0, schema.patternProperties?.getOrNull(schema.patternProperties?.keys?.singleOrNull), 1, schema.additionalProperties, 2, schema.items)
+    .filter((_, it) -> it is JsonSchema)
+    .flatMap((_, s) -> if (s is JsonSchema)
+        _findMatchingSubSchemas(s, if (path.length > 0) path.add(singularize.singularize(path.last)) else path, predicate)
+      else
+        Map())
+  + Map(0, schema.properties, 1, schema.definitions, 2, schema.$defs, 3, schema._inline_)
+      .flatMap((_, m) -> findMatchingSchemasInMapping(m, path, predicate))
+  + Map(schema.items, "Item", schema.oneOf, "Alternate", schema.anyOf, "Alternate").flatMap((l, namePart) -> if (l is Listing)
+      findMatchingSchemasInListing(l as Listing, path, namePart, predicate)
+    else
+      Map()
+    )
+}.toMap()
+
 /// The schemas that should be rendered as classes.
 ///
 /// Classes get rendered for any subschema that has [JsonSchema.properties] defined, and does not have [JsonSchema.`$ref`] defined.
 local classSchemas: Type.TypeNames =
-  let (schemas = utils._findMatchingSubSchemas(rootSchema, List(), (elem) -> elem != rootSchema && isClassLike(elem)))
+  let (schemas = _findMatchingSubSchemas(rootSchema, List(), (elem) -> true).filter((key, elem) -> elem != rootSchema && isClassLike(elem)))
     schemas
       .entries
       .fold(Map(), (accumulator: Type.TypeNames, pair) ->
@@ -238,7 +298,7 @@ local classNames: Set<Type> = classSchemas.values.toSet()
 /// Typealiases get rendered for any [JsonSchema.definitions] or [JsonSchema.`$defs`] that should not be rendered as a class.
 local typeAliasSchemas: Type.TypeNames =
   // Grab all schemas that have `definitions` or `$defs`
-  let (schemasWithDefinitions = utils._findMatchingSubSchemas(rootSchema, List(), (elem) -> (elem.definitions ?? elem.$defs) != null))
+  let (schemasWithDefinitions = _findMatchingSubSchemas(rootSchema, List(), (elem) -> (elem.definitions ?? elem.$defs) != null))
     schemasWithDefinitions
       .entries
       // For each schema, return the child json schema properties that are not class-like
