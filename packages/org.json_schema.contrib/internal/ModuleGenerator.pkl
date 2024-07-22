@@ -231,27 +231,6 @@ local function findMatchingSchemasInMapping(
       .filter((_, value) -> value is JsonSchema)
       .flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName), predicate))
 
-local function findMatchingSchemasInListing(
-  l: Listing<JsonSchema.Schema>?,
-  path: List<String>,
-  namePart: String,
-  predicate: (JsonSchema) -> Boolean
-): Map<List<String>, JsonSchema> =
-  if (l == null)
-    Map()
-  else
-    l.toList()
-      .filterIsInstance(JsonSchema.getClass())
-      .mapIndexed((idx, schema) -> Pair(idx, schema))
-      .toMap((p) -> p.first, (p) -> p.second)
-      .flatMap((idx, schema) ->
-      _findMatchingSubSchemas(
-        schema,
-        path.add((path.lastOrNull ?? "") + namePart + idx.toString()),
-        predicate
-      )
-    )
-
 function _findMatchingSubSchemas(
   schema: JsonSchema,
   path: List<String>,
@@ -270,7 +249,17 @@ function _findMatchingSubSchemas(
   + Map(0, schema.properties, 1, schema.definitions, 2, schema.$defs, 3, schema._inline_)
       .flatMap((_, m) -> findMatchingSchemasInMapping(m, path, predicate))
   + Map(schema.items, "Item", schema.oneOf, "Alternate", schema.anyOf, "Alternate").flatMap((l, namePart) -> if (l is Listing)
-      findMatchingSchemasInListing(l as Listing, path, namePart, predicate)
+      l.toList()
+        .filterIsInstance(JsonSchema.getClass())
+        .mapIndexed((idx, schema) -> Pair(idx, schema))
+        .toMap((p) -> p.first, (p) -> p.second)
+        .flatMap((idx, schema) ->
+        _findMatchingSubSchemas(
+          schema,
+          path.add((path.lastOrNull ?? "") + namePart + idx.toString()),
+          predicate
+        )
+      )
     else
       Map()
     )
