@@ -370,7 +370,7 @@ examples {
   }
   ["coverage"] {
     local function jsonSchemaType(t: JsonSchema) =
-      t.$id ?? t.$ref ?? t.$$baseSchema.ifNonNull((it) -> jsonSchemaType(it)) ?? "INDETERMINATE"
+      t.$id ?? t.$ref ?? t.$$baseSchema.ifNonNull((it) -> jsonSchemaType(it as JsonSchema)) ?? "INDETERMINATE"
 
     for (gen in read*("corpus/*").toMap().entries.flatMap((it) -> new ModuleGenerator {
       rootSchema = Parser.parse(it.second) as JsonSchema
