@@ -369,17 +369,21 @@ examples {
     new ModuleGenerator { rootSchema = schema; moduleName = "com.apple.Example" }.moduleNode.render("")
   }
   ["coverage"] {
+    local function jsonSchemaType(t: JsonSchema) =
+      t.$id ?? t.$ref ?? t.$$baseSchema.ifNonNull((it) -> jsonSchemaType(it)) ?? "INDETERMINATE"
+
     for (gen in read*("corpus/*").toMap().entries.flatMap((it) -> new ModuleGenerator {
       rootSchema = Parser.parse(it.second) as JsonSchema
       baseUri = URI.parse(it.first)!!
     }.modules.toList())) {
       "\(gen.rootSchema.$ref.padEnd(40, " ")) \(gen.baseUri)"
-      for (type in gen.existingTypes.keys) {
-        "  - existing type: \(type.$ref)"
-      }
       for (type in gen.moduleTypes.keys) {
-        "  - module type: \(type.title)"
+        "  - module type: \(jsonSchemaType(type)) @ \(type.type) :: \(type.title?.takeWhile((it) -> it != "\n"))"
       }
+      for (schema, type in gen.existingTypes) {
+        "  - existing type: \(jsonSchemaType(schema)) \(type.name)"
+      }
+      "  - submodules: \(gen.modules.toList().map((it) -> it.moduleName).join(", "))"
     }
   }
 }
