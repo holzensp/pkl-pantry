@@ -307,8 +307,9 @@ local isExternalSchema = (baseUri: URI) -> (schema: JsonSchema) ->
           || baseUri.path != resolvedUri.path
 
 function gatherAllSchemas(schema: JsonSchema, baseUri: URI): List<Pair<JsonSchema, URI>> =
-  let (externalSchemas = utils.findMatchingSubschemas(schema, isExternalSchema.apply(baseUri)))
-    externalSchemas.values.flatMap((it) ->
+  subSchemas.values
+    .filter(isExternalSchema.apply(baseUri))
+    .flatMap((it) ->
       let (resolvedUri = baseUri.resolveUri(it.$$refUri!!).basePath)
         let (jsonSchemaBlob = read?(resolvedUri.toString()))
           if (jsonSchemaBlob == null)
@@ -319,7 +320,7 @@ function gatherAllSchemas(schema: JsonSchema, baseUri: URI): List<Pair<JsonSchem
               $$baseSchema = this
             })
               gatherAllSchemas(parsedJsonSchema, resolvedUri)
-    ).add(Pair(schema, baseUri))
+  ).add(Pair(schema, baseUri))
 
 local schemas = gatherAllSchemas(rootSchema, baseUri)
 
