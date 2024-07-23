@@ -219,48 +219,45 @@ local function determineTypeName(path: List<String>, candidateName: String, exis
 
 function _findMatchingSubSchemas(
   schema: JsonSchema,
-  path: List<String>,
-  predicate: (JsonSchema) -> Boolean
+  path: List<String>
 ): Map<List<String>, JsonSchema> = new Mapping {
-  ...(if (predicate.apply(schema))
-    Map(path, schema)
-  else
-    Map())
-  + Map(0, schema.patternProperties?.getOrNull(schema.patternProperties?.keys?.singleOrNull), 1, schema.additionalProperties, 2, schema.items)
-    .filter((_, it) -> it is JsonSchema)
-    .flatMap((_, s) -> if (s is JsonSchema)
-        _findMatchingSubSchemas(s, if (path.length > 0) path.add(singularize.singularize(path.last)) else path, predicate)
-      else
-        Map())
-  + Map(0, schema.properties, 1, schema.definitions, 2, schema.$defs, 3, schema._inline_)
-      .flatMap((_, m) -> m
-        ?.toMap()
-        ?.filter((_, value) -> value is JsonSchema)
-        ?.flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName), predicate))
-      ?? Map())
-  + Map(schema.items, "Item", schema.oneOf, "Alternate", schema.anyOf, "Alternate").flatMap((l, namePart) -> if (l is Listing)
-      l.toList()
-        .filterIsInstance(JsonSchema.getClass())
-        .mapIndexed((idx, schema) -> Pair(idx, schema))
-        .toMap((p) -> p.first, (p) -> p.second)
-        .flatMap((idx, schema) ->
-        _findMatchingSubSchemas(
-          schema,
-          path.add((path.lastOrNull ?? "") + namePart + idx.toString()),
-          predicate
+  ...Map(path, schema)
+    + Map(0, schema.patternProperties?.getOrNull(schema.patternProperties?.keys?.singleOrNull), 1, schema.additionalProperties, 2, schema.items)
+      .filter((_, it) -> it is JsonSchema)
+      .flatMap((_, s) -> if (s is JsonSchema)
+          _findMatchingSubSchemas(s, if (path.length > 0) path.add(singularize.singularize(path.last)) else path)
+        else
+          Map())
+    + Map(0, schema.properties, 1, schema.definitions, 2, schema.$defs, 3, schema._inline_)
+        .flatMap((_, m) -> m
+          ?.toMap()
+          ?.filter((_, value) -> value is JsonSchema)
+          ?.flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName)))
+        ?? Map())
+    + Map(schema.items, "Item", schema.oneOf, "Alternate", schema.anyOf, "Alternate").flatMap((l, namePart) -> if (l is Listing)
+        l.toList()
+          .filterIsInstance(JsonSchema.getClass())
+          .mapIndexed((idx, schema) -> Pair(idx, schema))
+          .toMap((p) -> p.first, (p) -> p.second)
+          .flatMap((idx, schema) ->
+          _findMatchingSubSchemas(
+            schema,
+            path.add((path.lastOrNull ?? "") + namePart + idx.toString())
+          )
         )
+      else
+        Map()
       )
-    else
-      Map()
-    )
 }.toMap()
+
+local subSchemas = _findMatchingSubSchemas(rootSchema, List())
 
 /// The schemas that should be rendered as classes.
 ///
 /// Classes get rendered for any subschema that has [JsonSchema.properties] defined, and does not have [JsonSchema.`$ref`] defined.
 local classSchemas: Type.TypeNames =
-  let (schemas = _findMatchingSubSchemas(rootSchema, List(), (elem) -> true).filter((key, elem) -> elem != rootSchema && isClassLike(elem)))
-    schemas
+    subSchemas
+      .filter((key, elem) -> elem != rootSchema && isClassLike(elem))
       .entries
       .fold(Map(), (accumulator: Type.TypeNames, pair) ->
         let (path = pair.first)
@@ -277,28 +274,28 @@ local classNames: Set<Type> = classSchemas.values.toSet()
 /// Typealiases get rendered for any [JsonSchema.definitions] or [JsonSchema.`$defs`] that should not be rendered as a class.
 local typeAliasSchemas: Type.TypeNames =
   // Grab all schemas that have `definitions` or `$defs`
-  let (schemasWithDefinitions = _findMatchingSubSchemas(rootSchema, List(), (elem) -> (elem.definitions ?? elem.$defs) != null))
-    schemasWithDefinitions
-      .entries
-      // For each schema, return the child json schema properties that are not class-like
-      .flatMap((pair) ->
+  subSchemas
+    .filter((_, elem) -> (elem.definitions ?? elem.$defs) != null)
+    .entries
+    // For each schema, return the child json schema properties that are not class-like
+    .flatMap((pair) ->
+      let (path = pair.first)
+      let (schema = pair.second)
+        (schema.definitions ?? schema.$defs ?? new Mapping<String, JsonSchema> {}).toMap()
+          .filter((_, value) -> value is JsonSchema && value.$ref == null && !isClassLike(value))
+          .mapKeys((key, _) -> path.add(key))
+          .entries
+    )
+    .filter((pair) -> pair.second is JsonSchema)
+    .fold(Map(), (accumulator: Type.TypeNames, pair: Pair<List<String>, JsonSchema.Schema>) ->
+      if (pair.second is Boolean)
+        accumulator
+      else
+        let (schema = pair.second as JsonSchema)
         let (path = pair.first)
-        let (schema = pair.second)
-          (schema.definitions ?? schema.$defs ?? new Mapping<String, JsonSchema> {}).toMap()
-            .filter((_, value) -> value is JsonSchema && value.$ref == null && !isClassLike(value))
-            .mapKeys((key, _) -> path.add(key))
-            .entries
-      )
-      .filter((pair) -> pair.second is JsonSchema)
-      .fold(Map(), (accumulator: Type.TypeNames, pair: Pair<List<String>, JsonSchema.Schema>) ->
-        if (pair.second is Boolean)
-          accumulator
-        else
-          let (schema = pair.second as JsonSchema)
-          let (path = pair.first)
-          let (typeName = determineTypeName(path, path.last.capitalize(), accumulator.values.toSet() + classNames, 0))
-            accumulator.put(schema, typeName)
-      )
+        let (typeName = determineTypeName(path, path.last.capitalize(), accumulator.values.toSet() + classNames, 0))
+          accumulator.put(schema, typeName)
+    )
 
 
 local isExternalSchema = (baseUri: URI) -> (schema: JsonSchema) ->
