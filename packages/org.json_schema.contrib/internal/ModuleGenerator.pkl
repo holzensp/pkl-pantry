@@ -217,20 +217,6 @@ local function determineTypeName(path: List<String>, candidateName: String, exis
     else
       candidateType
 
-
-local function findMatchingSchemasInMapping(
-  m: Mapping<String, JsonSchema.Schema>?,
-  path: List<String>,
-  predicate: (JsonSchema) -> Boolean
-): Map<List<String>, JsonSchema> =
-  if (m == null)
-    Map()
-  else
-    m
-      .toMap()
-      .filter((_, value) -> value is JsonSchema)
-      .flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName), predicate))
-
 function _findMatchingSubSchemas(
   schema: JsonSchema,
   path: List<String>,
@@ -247,7 +233,11 @@ function _findMatchingSubSchemas(
       else
         Map())
   + Map(0, schema.properties, 1, schema.definitions, 2, schema.$defs, 3, schema._inline_)
-      .flatMap((_, m) -> findMatchingSchemasInMapping(m, path, predicate))
+      .flatMap((_, m) -> m
+        ?.toMap()
+        ?.filter((_, value) -> value is JsonSchema)
+        ?.flatMap((propertyName, schema) -> _findMatchingSubSchemas(schema as JsonSchema, path.add(propertyName), predicate))
+      ?? Map())
   + Map(schema.items, "Item", schema.oneOf, "Alternate", schema.anyOf, "Alternate").flatMap((l, namePart) -> if (l is Listing)
       l.toList()
         .filterIsInstance(JsonSchema.getClass())
