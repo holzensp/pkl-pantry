@@ -19,9 +19,7 @@
 module org.json_schema.contrib.internal.ModuleGenerator
 
 import "@syntax/TypeNode.pkl"
-import "@syntax/ClassNode.pkl"
 import "@syntax/ClassOrModuleNode.pkl"
-import "@syntax/TypeAliasNode.pkl"
 import "@syntax/ModuleNode.pkl"
 import "@syntax/DocCommentNode.pkl"
 import "@jsonschema/JsonSchema.pkl"
@@ -67,12 +65,29 @@ moduleNode: ModuleNode =
       }
       classes {
         for (schema, type in classSchemas) {
-          generatePklClass(schema, type, allTypeNames)
+          new {
+            docComment = getDocComment(schema, "class")
+            when (schema.deprecated == true) {
+              annotations { utils.DEPRECATED }
+            }
+            classHeader {
+              name {
+                value = type.name
+              }
+            }
+            properties = generateClassBody(schema, allTypeNames)
+          }
         }
       }
       typealiases {
-        for (schema, type in typeAliasSchemas) {
-          generatePklTypeAlias(schema, type, allTypeNames)
+        for (schema, _type in typeAliasSchemas) {
+          new {
+            name {
+              value = _type.name
+            }
+            docComment = getDocComment(schema, null)
+            type = typesGenerator.generateTypeNode(schema, allTypeNames.remove(schema))
+          }
         }
       }
       declaration {
@@ -89,10 +104,9 @@ moduleNode: ModuleNode =
           }
         }
       }
-      properties =
-        if (isClassLike(rootSchema))
-          generateClassBody(rootSchema, allTypeNames)
-        else null
+      when (isClassLike(rootSchema)) {
+        properties = generateClassBody(rootSchema, allTypeNames)
+      }
     }
 
 /// Determine the doc comments of a schema.
@@ -168,34 +182,6 @@ local function generateClassBody(
       }
     }
 
-/// Generates a [ClassNode] from a [JsonSchema].
-local function generatePklClass(schema: JsonSchema, className: Type, typeNames: Type.TypeNames): ClassNode =
-  new {
-    docComment = getDocComment(schema, "class")
-    when (schema.deprecated == true) {
-      annotations { utils.DEPRECATED }
-    }
-    classHeader {
-      name {
-        value = className.name
-      }
-    }
-    properties = generateClassBody(schema, typeNames)
-  }
-
-/// Generates a [TypeAliasNode] from a [JsonSchema].
-local function generatePklTypeAlias(
-  schema: JsonSchema,
-  typeAliasName: Type,
-  typeNames: Type.TypeNames
-): TypeAliasNode = new {
-  name {
-    value = typeAliasName.name
-  }
-  docComment = getDocComment(schema, null)
-  type = typesGenerator.generateTypeNode(schema, typeNames.remove(schema))
-}
-
 function isClassLike(schema: JsonSchema.Schema): Boolean =
   if (schema is Boolean)
     false
@@ -252,51 +238,51 @@ function _findMatchingSubSchemas(
 
 local subSchemas = _findMatchingSubSchemas(rootSchema, List())
 
+class TypeGenerator {
+  kind: "class"|"typealias"
+  type: Type
+  schema: JsonSchema
+  existingTypeGenerators: Set<TypeGenerator>
+  fixed existingTypes = existingTypeGenerators.map((it) -> it.type)
+}
+
+local typesInModule: Listing<TypeGenerator> = new {
+  default = (i) -> new TypeGenerator {
+    existingTypeGenerators = if (i == 0) Set() else typesInModule[i-1].existingTypeGenerators.add(typesInModule[i-1])
+  }
+  for (path, _schema in subSchemas) {
+    when (_schema != rootSchema && isClassLike(_schema)) {
+      new {
+        kind = "class"
+        type = determineTypeName(path.dropLast(1), path.lastOrNull?.capitalize() ?? "Item", this.existingTypes, 0)
+        schema = _schema
+      }
+    }
+    // For each schema, return the child json schema properties that are not class-like
+    for (key, __schema in _schema.definitions ?? _schema.$defs ?? Map()) {
+      when (__schema is JsonSchema && __schema.$ref == null && !isClassLike(__schema)) {
+        new {
+          kind = "typealias"
+          type = determineTypeName(path.add(key), key.capitalize(), this.existingTypes, 0)
+          schema = __schema
+        }
+      }
+    }
+  }
+}
+
 /// The schemas that should be rendered as classes.
 ///
 /// Classes get rendered for any subschema that has [JsonSchema.properties] defined, and does not have [JsonSchema.`$ref`] defined.
 local classSchemas: Type.TypeNames =
-    subSchemas
-      .filter((key, elem) -> elem != rootSchema && isClassLike(elem))
-      .entries
-      .fold(Map(), (accumulator: Type.TypeNames, pair) ->
-        let (path = pair.first)
-        let (schema = pair.second)
-        let (typeName = determineTypeName(path.dropLast(1), path.lastOrNull?.capitalize() ?? "Item", accumulator.values.toSet(), 0))
-          accumulator.put(schema, typeName)
-      )
-
-local classNames: Set<Type> = classSchemas.values.toSet()
+  typesInModule.toList().filter((it) -> it.kind == "class").toMap((it) -> it.schema, (it) -> it.type)
 
 /// The schemas that should be rendered as typealiases.
 ///
 /// This is done by traversing schema definintions.
 /// Typealiases get rendered for any [JsonSchema.definitions] or [JsonSchema.`$defs`] that should not be rendered as a class.
 local typeAliasSchemas: Type.TypeNames =
-  // Grab all schemas that have `definitions` or `$defs`
-  subSchemas
-    .filter((_, elem) -> (elem.definitions ?? elem.$defs) != null)
-    .entries
-    // For each schema, return the child json schema properties that are not class-like
-    .flatMap((pair) ->
-      let (path = pair.first)
-      let (schema = pair.second)
-        (schema.definitions ?? schema.$defs ?? new Mapping<String, JsonSchema> {}).toMap()
-          .filter((_, value) -> value is JsonSchema && value.$ref == null && !isClassLike(value))
-          .mapKeys((key, _) -> path.add(key))
-          .entries
-    )
-    .filter((pair) -> pair.second is JsonSchema)
-    .fold(Map(), (accumulator: Type.TypeNames, pair: Pair<List<String>, JsonSchema.Schema>) ->
-      if (pair.second is Boolean)
-        accumulator
-      else
-        let (schema = pair.second as JsonSchema)
-        let (path = pair.first)
-        let (typeName = determineTypeName(path, path.last.capitalize(), accumulator.values.toSet() + classNames, 0))
-          accumulator.put(schema, typeName)
-    )
-
+  typesInModule.toList().filter((it) -> it.kind == "typealias").toMap((it) -> it.schema, (it) -> it.type)
 
 local isExternalSchema = (baseUri: URI) -> (schema: JsonSchema) ->
       if (schema.$$refUri == null) false
