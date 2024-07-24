@@ -183,11 +183,8 @@ local function generateClassBody(
     }
 
 function isClassLike(schema: JsonSchema.Schema): Boolean =
-  if (schema is Boolean)
-    false
-  else
-    // Edge case: if `$ref` exists, any other property should be ignored.
-    schema.$ref == null && schema.properties != null
+  // Edge case: if `$ref` exists, any other property should be ignored.
+  schema is JsonSchema && schema.$ref == null && schema.properties != null
 
 /// Determine the name of a type.
 ///
@@ -199,7 +196,7 @@ local function determineTypeName(path: List<String>, candidateName: String, exis
       if (path.isEmpty)
         determineTypeName(path, candidateName + index.toString(), existingTypeNames, index + 1)
       else
-        determineTypeName(path.dropLast(1), utils.pascalCase(path.last.capitalize()) + utils.pascalCase(candidateName), existingTypeNames, index)
+        determineTypeName(path.dropLast(1), utils.pascalCase(path.last + "_" + candidateName), existingTypeNames, index)
     else
       candidateType
 
